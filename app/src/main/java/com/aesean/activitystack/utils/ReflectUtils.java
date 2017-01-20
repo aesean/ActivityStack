@@ -192,9 +192,10 @@ public class ReflectUtils {
                         + "及其父类，找到方法：" + methodName
                         + "。请检查脚本中的：" + script);
             } catch (InvocationTargetException e) {
-                e.printStackTrace();
+                throw new RuntimeException("在类：" + targetClass
+                        + "执行方法：" + methodName
+                        + "发生异常。请检查脚本中的：" + script);
             }
-            return null;
         } else {
             Field field;
             try {

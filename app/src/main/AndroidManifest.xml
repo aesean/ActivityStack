@@ -20,6 +20,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.aesean.activitystack">
 
+    <!--suppress DeprecatedClassUsageInspection -->
+    <uses-permission android:name="android.permission.GET_TASKS"/>
+
     <application
         android:name=".AppApplication"
         android:allowBackup="true"
