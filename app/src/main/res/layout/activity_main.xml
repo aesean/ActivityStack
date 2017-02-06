@@ -33,4 +33,41 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="text"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="block_200ms"
+        android:text="@string/block_200ms"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="block_400ms"
+        android:text="@string/block_400ms"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="block_800ms"
+        android:text="@string/block_800ms"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="block_1200ms"
+        android:text="@string/block_1200ms"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="block_2000ms"
+        android:text="@string/block_2000ms"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="block_5000ms"
+        android:text="@string/block_5000ms"/>
+
 </LinearLayout>

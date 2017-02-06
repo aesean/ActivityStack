@@ -16,8 +16,9 @@
 
 package com.aesean.activitystack;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -54,5 +55,42 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
                         "发布release的时候，这里的代码会被自动删除。", Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    public void block_200ms(View view) {
+        block(200);
+    }
+
+    public void block_400ms(View view) {
+        block(400);
+    }
+
+    public void block_800ms(View view) {
+        block(800);
+    }
+
+    public void block_1200ms(View view) {
+        block(1200);
+    }
+
+    public void block_2000ms(View view) {
+        block_1200ms(view);
+        block_400ms(view);
+        block_400ms(view);
+    }
+
+    public void block_5000ms(View view) {
+        block_2000ms(view);
+        block_2000ms(view);
+        block_800ms(view);
+        block_200ms(view);
+    }
+
+    private void block(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

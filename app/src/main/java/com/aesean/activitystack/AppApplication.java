@@ -52,5 +52,6 @@ public class AppApplication extends Application {
         }
         new LifecycleUtils(this).register();
         new ShakeManager(this).registerShakeDetector();
+        BlockUtils.getInstance().install();
     }
 }

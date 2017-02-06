@@ -17,4 +17,11 @@
 <resources>
     <string name="app_name">ActivityStack</string>
     <string name="second_activity">SecondActivity</string>
+    <string name="block_200ms">block_200ms</string>
+    <string name="block_400ms">block_400ms</string>
+    <string name="block_800ms">block_800ms</string>
+    <string name="block_1000ms">block_1000ms</string>
+    <string name="block_1200ms">block_1200ms</string>
+    <string name="block_2000ms">block_2000ms</string>
+    <string name="block_5000ms">block_5000ms</string>
 </resources>
