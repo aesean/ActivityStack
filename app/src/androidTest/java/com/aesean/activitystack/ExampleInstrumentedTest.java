@@ -1,5 +1,5 @@
 /*
- *    Copyright Aesean
+ *    Copyright (C) 2017.  Aesean
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import android.support.test.runner.AndroidJUnit4;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Instrumentation test, which will execute on an Android device.
