@@ -19,6 +19,7 @@ package com.aesean.activitystack.utils;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 /**
  * ReflectUtils
@@ -30,20 +31,9 @@ import java.lang.reflect.Method;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class ReflectUtils {
-    private static Object getField(Object target, String arg) throws Exception {
-        if (arg.contains(".")) {
-            throw new IllegalArgumentException("属性名称不能包含：.");
-        }
-        Class<?> clazz = target.getClass();
-        Field field = clazz.getDeclaredField(arg);
-        if (!field.isAccessible()) {
-            field.setAccessible(true);
-        }
-        return field.get(target);
-    }
 
     public static Method reflectMethod(Class<?> clazz, String methodName
-            , Class<?>... parameterTypes) throws Exception {
+            , Class<?>... parameterTypes) throws NoSuchMethodException {
         try {
             return clazz.getDeclaredMethod(methodName, parameterTypes);
         } catch (NoSuchMethodException e) {
@@ -55,7 +45,7 @@ public class ReflectUtils {
         }
     }
 
-    public static Field reflectField(Class<?> clazz, String fieldName) throws Exception {
+    public static Field reflectField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
         try {
             return clazz.getDeclaredField(fieldName);
         } catch (NoSuchFieldException e) {
@@ -66,11 +56,6 @@ public class ReflectUtils {
             return reflectField(superclass, fieldName);
         }
     }
-
-    private static boolean isMethod(String block) {
-        return block.contains("(") && block.endsWith(")");
-    }
-
 
     /**
      * 辅助工具，用来更简单的通过反射，像写脚本一样更清晰容易的调用和处理Java类。
@@ -91,9 +76,9 @@ public class ReflectUtils {
      * @param script 脚本
      * @return 最终结果。注意，如果脚本最后一个block是属性，无论是否需要更新新属性，这里都会返回反射到的对象。
      * 如果最后一个block是方法，这里会返回方法的处理结果。
-     * @throws Exception 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
+     * @throws ReflectException 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
      */
-    public static Object reflect(Object target, String script) throws Exception {
+    public static Object reflect(Object target, String script) throws ReflectException {
         return reflect(target, script, null);
     }
 
@@ -124,9 +109,9 @@ public class ReflectUtils {
      *               {@link #reflect(Object, String, Object[], Class[])}显示指定参数的真实类型。
      * @return 最终结果。注意，如果脚本最后一个block是属性，无论是否需要更新新属性，这里都会返回反射到的对象。
      * 如果最后一个block是方法，这里会返回方法的处理结果。
-     * @throws Exception 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
+     * @throws ReflectException 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
      */
-    public static Object reflect(Object target, String script, Object[] args) throws Exception {
+    public static Object reflect(Object target, String script, Object[] args) throws ReflectException {
         Class[] classes = null;
         if (args != null) {
             classes = new Class[args.length];
@@ -159,10 +144,10 @@ public class ReflectUtils {
      * @param newValue 如果脚本最后一个block是属性，则会尝试把这个对象赋给反射到的对象
      * @return 最终结果。注意，如果脚本最后一个block是属性，无论是否需要更新新属性，这里都会返回反射到的对象。
      * 如果最后一个block是方法，这里会返回方法的处理结果。
-     * @throws Exception 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
+     * @throws ReflectException 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
      */
     public static Object reflect(Object target, String script, Object[] args
-            , Object newValue) throws Exception {
+            , Object newValue) throws ReflectException {
         script = script.trim();
         Class[] classes = null;
         if (args != null) {
@@ -172,14 +157,6 @@ public class ReflectUtils {
             }
         }
         return reflect(target, script, args, classes, newValue, true);
-    }
-
-    private static String getMethodName(String block) {
-        // 当block是method的时候block可能是以下几种类型
-        // method()
-        // method(%1)
-        // method(%1,%2)
-        return block.substring(0, block.indexOf('('));
     }
 
     /**
@@ -199,10 +176,10 @@ public class ReflectUtils {
      * @param classes 参数对象的类类型
      * @return 最终结果。注意，如果脚本最后一个block是属性，无论是否需要更新新属性，这里都会返回反射到的对象。
      * 如果最后一个block是方法，这里会返回方法的处理结果。
-     * @throws Exception 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
+     * @throws ReflectException 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
      */
     public static Object reflect(Object target, String script, final Object[] args
-            , final Class[] classes) throws Exception {
+            , final Class[] classes) throws ReflectException {
         return reflect(target, script, args, classes, null, false);
     }
 
@@ -224,10 +201,10 @@ public class ReflectUtils {
      * @param newValue 如果脚本最后一个block是属性，则会尝试把这个对象赋给反射到的对象，否则会忽略这个参数
      * @return 最终结果。注意，如果脚本最后一个block是属性，无论是否需要更新新属性，这里都会返回反射到的对象。
      * 如果最后一个block是方法，这里会返回方法的处理结果。
-     * @throws Exception 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
+     * @throws ReflectException 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
      */
     public static Object reflect(Object target, String script, final Object[] args
-            , final Class[] classes, final Object newValue) throws Exception {
+            , final Class[] classes, final Object newValue) throws ReflectException {
         return reflect(target, script, args, classes, newValue, true);
     }
 
@@ -259,10 +236,11 @@ public class ReflectUtils {
      *                    因为可能用户就是需要把目标设置为null
      * @return 最终结果。注意，如果脚本最后一个block是属性，无论是否需要更新新属性，这里都会返回反射到的对象。
      * 如果最后一个block是方法，这里会返回方法的处理结果。
-     * @throws Exception 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
+     * @throws ReflectException 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
      */
     public static Object reflect(Object target, String script, final Object[] args
-            , final Class[] classes, final Object newValue, boolean setNewValue) throws Exception {
+            , final Class[] classes, final Object newValue, boolean setNewValue)
+            throws ReflectException {
         if (script.startsWith(".")) {
             script = script.substring(1, script.length());
         }
@@ -274,7 +252,17 @@ public class ReflectUtils {
         final Class<?> targetClass;
         if (target == null) {
             int classIndex = script.indexOf('$');
-            targetClass = Class.forName(script.substring(0, classIndex));
+            if (classIndex == -1) {
+                throw new ReflectException("处理静态类必须用$符号分割目标类，" +
+                        "例如：android.app.ActivityThread$currentApplication()，请检查脚本：" + script);
+            }
+            String className = script.substring(0, classIndex);
+            try {
+                targetClass = Class.forName(className);
+            } catch (ClassNotFoundException e) {
+                throw new ReflectException("异常，无法找到类：" + className
+                        + "，请检查脚本：" + script, e);
+            }
             script = script.substring(classIndex + 1, script.length());
             firstPointIndex = script.indexOf('.');
             newScript = script.substring(firstPointIndex + 1, script.length());
@@ -320,7 +308,7 @@ public class ReflectUtils {
                     }
                     s += ")";
                     if (indexOf == -1) {
-                        throw new IllegalArgumentException("参数必须用%定义，参考写法：" + methodName
+                        throw new ReflectException("参数必须用%定义，参考写法：" + methodName
                                 + s + "。请检查脚本中的：" + script);
                     }
                     String substring = split[i].substring(indexOf + 1
@@ -329,7 +317,7 @@ public class ReflectUtils {
                     try {
                         index = Integer.parseInt(substring) - 1;
                     } catch (NumberFormatException e) {
-                        throw new IllegalArgumentException("参数解析错误，" + substring
+                        throw new ReflectException("参数解析错误，" + substring
                                 + "无法转换为数字，参考写法：" + methodName
                                 + s + "。请检查脚本中的：" + script);
                     }
@@ -343,17 +331,22 @@ public class ReflectUtils {
                 if (!method.isAccessible()) {
                     method.setAccessible(true);
                 }
-                Object invoke = method.invoke(target, arguments);
+                Object invoke;
+                invoke = method.invoke(target, arguments);
                 if (firstPointIndex == -1) {
                     return invoke;
                 }
                 return reflect(invoke, newScript, args, classes, newValue);
+            } catch (IllegalAccessException e) {
+                throw new ReflectException("类：" + targetClass
+                        + "参数类型为" + Arrays.toString(parameterTypes) + "的方法：" + methodName
+                        + "，调用异常" + "的方法，请检查脚本中的：" + script, e);
             } catch (NoSuchMethodException e) {
-                throw new RuntimeException("无法在类：" + targetClass
+                throw new ReflectException("无法在类：" + targetClass
                         + "及其父类，找到方法：" + methodName
                         + "。请检查脚本中的：" + script);
             } catch (InvocationTargetException e) {
-                throw new RuntimeException("在类：" + targetClass
+                throw new ReflectException("在类：" + targetClass
                         + "执行方法：" + methodName
                         + "发生异常。请检查脚本中的：" + script);
             }
@@ -362,88 +355,69 @@ public class ReflectUtils {
             try {
                 field = reflectField(targetClass, block);
             } catch (NoSuchFieldException e) {
-                throw new RuntimeException("无法在类：" + targetClass
+                throw new ReflectException("无法在类：" + targetClass
                         + "及其父类，找到属性：" + block
                         + "。请检查脚本中的：" + script);
             }
             if (!field.isAccessible()) {
                 field.setAccessible(true);
             }
-            Object o = field.get(target);
-            if (firstPointIndex == -1) {
-                if (setNewValue) {
-                    field.set(target, newValue);
+            Object o;
+            try {
+                o = field.get(target);
+                if (firstPointIndex == -1) {
+                    if (setNewValue) {
+                        field.set(target, newValue);
+                    }
+                    return o;
                 }
-                return o;
+            } catch (IllegalAccessException e) {
+                throw new ReflectException("类：" + targetClass
+                        + "的属性：" + block + "反射异常，请检查脚本中的：" + script, e);
             }
             return reflect(o, newScript, args, classes);
         }
     }
 
-    public static Object get(Object target, String arg) throws Exception {
-        int firstPointIndex = arg.indexOf('.');
-        final String fieldName;
-        if (firstPointIndex != -1) {
-            fieldName = arg.substring(0, firstPointIndex);
-        } else {
-            fieldName = arg;
-            return getField(target, fieldName);
-        }
-        Class<?> clazz = target.getClass();
-        Field field = clazz.getDeclaredField(fieldName);
-        if (!field.isAccessible()) {
-            field.setAccessible(true);
-        }
-        Object result = field.get(target);
-        return get(result, arg.substring(firstPointIndex + 1, arg.length()));
+    private static boolean isMethod(String block) {
+        return block.contains("(") && block.endsWith(")");
     }
 
-    private static void setField(Object target, String fieldName, Object value) throws Exception {
-        if (fieldName.contains(".")) {
-            throw new IllegalArgumentException("属性名称不能包含：.");
-        }
-        Class<?> clazz = target.getClass();
-        Field field = clazz.getDeclaredField(fieldName);
-        if (!field.isAccessible()) {
-            field.setAccessible(true);
-        }
-        field.set(target, value);
+    private static String getMethodName(String block) {
+        // 当block是method的时候block可能是以下几种类型
+        // method()
+        // method(%1)
+        // method(%1,%2)
+        return block.substring(0, block.indexOf('('));
     }
 
-    public static void set(Object target, String arg, Object value) throws Exception {
-        int firstIndexOf = arg.indexOf('.');
-        if (firstIndexOf != -1) {
-            String substring = arg.substring(0, firstIndexOf);
-            Class<?> clazz = target.getClass();
-            Field field = clazz.getDeclaredField(substring);
-            if (!field.isAccessible()) {
-                field.setAccessible(true);
-            }
-            Object result = field.get(target);
-            set(result, arg.substring(firstIndexOf + 1, arg.length()), value);
-        } else {
-            setField(target, arg, value);
+    public static class ReflectException extends Exception {
+
+        private static final long serialVersionUID = -2504804697196582566L;
+
+        /**
+         * Constructs a <code>ReflectException</code> without a detail message.
+         */
+        public ReflectException() {
+            super();
         }
+
+        /**
+         * Constructs a <code>ReflectException</code> with a detail message.
+         *
+         * @param s the detail message.
+         */
+        public ReflectException(String s) {
+            super(s);
+        }
+
+        public ReflectException(Throwable cause) {
+            super(cause);
+        }
+
+        public ReflectException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
     }
-//
-//    public static class ReflectException extends Exception {
-//
-//        private static final long serialVersionUID = -2504804697196582566L;
-//
-//        /**
-//         * Constructs a <code>ReflectException</code> without a detail message.
-//         */
-//        public ReflectException() {
-//            super();
-//        }
-//
-//        /**
-//         * Constructs a <code>ReflectException</code> with a detail message.
-//         *
-//         * @param s the detail message.
-//         */
-//        public ReflectException(String s) {
-//            super(s);
-//        }
-//    }
 }
