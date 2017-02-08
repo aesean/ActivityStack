@@ -87,15 +87,15 @@ public final class ApplicationUtils {
     }
 
     public static Object getActivityThread() throws ReflectUtils.ReflectException {
-        return ReflectUtils.reflect(null, "android.app.ActivityThread$currentActivityThread()");
+        return ReflectUtils.reflect(null, "android.app.ActivityThread#currentActivityThread()");
     }
 
     public static Application getApplication() throws ReflectUtils.ReflectException {
-        return (Application) ReflectUtils.reflect(null, "android.app.ActivityThread$currentApplication()");
+        return (Application) ReflectUtils.reflect(null, "android.app.ActivityThread#currentApplication()");
     }
 
     public static Object getActivities() throws ReflectUtils.ReflectException {
-        return ReflectUtils.reflect(null, "android.app.ActivityThread$currentActivityThread().mActivities");
+        return ReflectUtils.reflect(null, "android.app.ActivityThread#currentActivityThread().mActivities");
     }
 
 //    public static Object getActivities(Application application) throws Exception {

@@ -61,7 +61,7 @@ public class ReflectUtils {
      * 辅助工具，用来更简单的通过反射，像写脚本一样更清晰容易的调用和处理Java类。
      * 处理方式为，把script用.分隔成一组block，然后按从左到右的顺序一个个处理，直到结束或者某个block异常退出，
      * 没有回滚机制，不支持嵌套（例如不支持：setName(getName())），支持调用静态方法，
-     * 但注意静态方法调用需要用$符号分割目标类，参考示例写法。
+     * 但注意静态方法调用需要用#符号分割目标类，参考示例写法。
      * <p>
      * 调用示例：
      * <p>
@@ -69,7 +69,7 @@ public class ReflectUtils {
      * <p>
      * ReflectUtils.reflect(application, "mModel.getName().toString()");
      * <p>
-     * ReflectUtils.reflect(null, "android.app.ActivityThread$currentApplication()");
+     * ReflectUtils.reflect(null, "android.app.ActivityThread#currentApplication()");
      * <p>
      *
      * @param target 需要反射的对象
@@ -86,7 +86,7 @@ public class ReflectUtils {
      * 辅助工具，用来更简单的通过反射，像写脚本一样更清晰容易的调用和处理Java类。
      * 处理方式为，把script用.分隔成一组block，然后按从左到右的顺序一个个处理，直到结束或者某个block异常退出，
      * 没有回滚机制，不支持嵌套（例如不支持：setName(getName())），支持调用静态方法，
-     * 但注意静态方法调用需要用$符号分割目标类，参考示例写法。
+     * 但注意静态方法调用需要用#符号分割目标类，参考示例写法。
      * <p>
      * 调用示例：
      * <p>
@@ -96,7 +96,7 @@ public class ReflectUtils {
      * <p>
      * ReflectUtils.reflect(application, "mModel.setName(%1)", new Object[]{"new_name"});
      * <p>
-     * ReflectUtils.reflect(null, "android.app.ActivityThread$currentApplication()");
+     * ReflectUtils.reflect(null, "android.app.ActivityThread#currentApplication()");
      * <p>
      *
      * @param target 需要反射的对象
@@ -126,7 +126,7 @@ public class ReflectUtils {
      * 辅助工具，用来更简单的通过反射，像写脚本一样更清晰容易的调用和处理Java类。
      * 处理方式为，把script用.分隔成一组block，然后按从左到右的顺序一个个处理，直到结束或者某个block异常退出，
      * 没有回滚机制，不支持嵌套（例如不支持：setName(getName())），支持调用静态方法，
-     * 但注意静态方法调用需要用$符号分割目标类，参考示例写法。
+     * 但注意静态方法调用需要用#符号分割目标类，参考示例写法。
      * <p>
      * 调用示例：
      * <p>
@@ -163,7 +163,7 @@ public class ReflectUtils {
      * 辅助工具，用来更简单的通过反射，像写脚本一样更清晰容易的调用和处理Java类。
      * 处理方式为，把script用.分隔成一组block，然后按从左到右的顺序一个个处理，直到结束或者某个block异常退出，
      * 没有回滚机制，不支持嵌套（例如不支持：setName(getName())），支持调用静态方法，
-     * 但注意静态方法调用需要用$符号分割目标类，参考示例写法。
+     * 但注意静态方法调用需要用#符号分割目标类，参考示例写法。
      * <p>
      * 调用示例：
      * <p>
@@ -187,7 +187,7 @@ public class ReflectUtils {
      * 辅助工具，用来更简单的通过反射，像写脚本一样更清晰容易的调用和处理Java类。
      * 处理方式为，把script用.分隔成一组block，然后按从左到右的顺序一个个处理，直到结束或者某个block异常退出，
      * 没有回滚机制，不支持嵌套（例如不支持：setName(getName())），支持调用静态方法，
-     * 但注意静态方法调用需要用$符号分割目标类，参考示例写法。
+     * 但注意静态方法调用需要用#符号分割目标类，参考示例写法。
      * <p>
      * 调用示例：
      * <p>
@@ -212,7 +212,7 @@ public class ReflectUtils {
      * 辅助工具，用来更简单的通过反射，像写脚本一样更清晰容易的调用和处理Java类。
      * 处理方式为，把script用.分隔成一组block，然后按从左到右的顺序一个个处理，直到结束或者某个block异常退出，
      * 没有回滚机制，不支持嵌套（例如不支持：setName(getName())），支持调用静态方法，
-     * 但注意静态方法调用需要用$符号分割目标类，参考示例写法。
+     * 但注意静态方法调用需要用#符号分割目标类，参考示例写法。
      * <p>
      * 调用示例：
      * <p>
@@ -222,7 +222,7 @@ public class ReflectUtils {
      * <p>
      * ReflectUtils.reflect(application, "mModel.setName(%1)");
      * <p>
-     * ReflectUtils.reflect(null, "android.app.ActivityThread$currentApplication()");
+     * ReflectUtils.reflect(null, "android.app.ActivityThread#currentApplication()");
      * <p>
      * ReflectUtils.reflect(application, "mModel.setName(%1).value, new Object[]{"new_name"}, new Class[]{String.class}, newValue, true);
      * <p>
@@ -251,10 +251,10 @@ public class ReflectUtils {
         final String newScript;
         final Class<?> targetClass;
         if (target == null) {
-            int classIndex = script.indexOf('$');
+            int classIndex = script.indexOf('#');
             if (classIndex == -1) {
-                throw new ReflectException("处理静态类必须用$符号分割目标类，" +
-                        "例如：android.app.ActivityThread$currentApplication()，请检查脚本：" + script);
+                throw new ReflectException("处理静态类必须用#符号分割目标类，" +
+                        "例如：android.app.ActivityThread#currentApplication()，请检查脚本：" + script);
             }
             String className = script.substring(0, classIndex);
             try {
