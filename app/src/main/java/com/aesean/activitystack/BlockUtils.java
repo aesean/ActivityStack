@@ -88,7 +88,7 @@ public class BlockUtils {
     private long mStartTime;
 
     private BlockUtils() {
-        this(Looper.getMainLooper());
+        this(Looper.myLooper());
     }
 
     public BlockUtils(Looper looper) {
@@ -237,7 +237,7 @@ public class BlockUtils {
     }
 
     private static class InstanceHolder {
-        private static final BlockUtils sInstance = new BlockUtils();
+        private static final BlockUtils sInstance = new BlockUtils(Looper.getMainLooper());
     }
 
     private class PrintStaceInfoRunnable implements Runnable {

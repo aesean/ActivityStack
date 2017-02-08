@@ -39,12 +39,16 @@ import java.util.Map;
 @SuppressWarnings({"WeakerAccess", "unused"})
 public final class ApplicationUtils {
 
-    public static List<Activity> getActivitiesByApplication(Application application) throws Exception {
-        Object activities = getActivities(application);
+    public static List<Activity> getActivitiesByApplication() throws Exception {
+        Object activities = getActivities();
         if (activities != null) {
             return toActivityList(activities);
         }
         return null;
+    }
+
+    public static Activity getTopActivity() throws Exception {
+        return getTopActivity(getApplication());
     }
 
     public static Activity getTopActivity(Application application) throws Exception {
@@ -71,7 +75,7 @@ public final class ApplicationUtils {
             }
         }
         if (TextUtils.isEmpty(topActivity)) return null;
-        List<Activity> activities = getActivitiesByApplication(application);
+        List<Activity> activities = getActivitiesByApplication();
         if (activities != null) {
             for (Activity activity : activities) {
                 if (topActivity.equals(activity.getClass().getName())) {
@@ -82,8 +86,20 @@ public final class ApplicationUtils {
         return null;
     }
 
-    public static Object getActivities(Application application) throws Exception {
-        return ReflectUtils.reflect(application, "mLoadedApk.mActivityThread.mActivities");
+    public static Object getActivityThread() throws ReflectUtils.ReflectException {
+        return ReflectUtils.reflect(null, "android.app.ActivityThread$currentActivityThread()");
+    }
+
+    public static Application getApplication() throws ReflectUtils.ReflectException {
+        return (Application) ReflectUtils.reflect(null, "android.app.ActivityThread$currentApplication()");
+    }
+
+    public static Object getActivities() throws ReflectUtils.ReflectException {
+        return ReflectUtils.reflect(null, "android.app.ActivityThread$currentActivityThread().mActivities");
+    }
+
+//    public static Object getActivities(Application application) throws Exception {
+//        return ReflectUtils.reflect(application, "mLoadedApk.mActivityThread.mActivities");
 //            Class<Application> applicationClass = Application.class;
 //            Field mLoadedApkField = applicationClass.getDeclaredField("mLoadedApk");
 //            mLoadedApkField.setAccessible(true);
@@ -96,21 +112,21 @@ public final class ApplicationUtils {
 //            Field mActivitiesField = mActivityThreadClass.getDeclaredField("mActivities");
 //            mActivitiesField.setAccessible(true);
 //            return mActivitiesField.get(mActivityThread);
-    }
+//    }
 
-    public static List<Object> getActivitiesKeyList(Application application) throws Exception {
-        Object activities = getActivities(application);
+    public static List<Object> getActivitiesKeyList() throws Exception {
+        Object activities = getActivities();
         return toKeyList(activities);
     }
 
-    private static List<Object> toKeyList(Object mActivities) {
-        if (mActivities == null) {
+    private static List<Object> toKeyList(Object activities) {
+        if (activities == null) {
             throw new NullPointerException("mActivities can't be null");
         }
         List<Object> list = new ArrayList<>();
-        if (mActivities instanceof Map) {
+        if (activities instanceof Map) {
             @SuppressWarnings("unchecked")
-            Map<Object, Object> arrayMap = (Map<Object, Object>) mActivities;
+            Map<Object, Object> arrayMap = (Map<Object, Object>) activities;
             for (Map.Entry<Object, Object> entry : arrayMap.entrySet()) {
                 Object key = entry.getKey();
                 list.add(key);
@@ -119,19 +135,19 @@ public final class ApplicationUtils {
         return list;
     }
 
-    public static List<Object> getActivitiesValueList(Application application) throws Exception {
-        Object activities = getActivities(application);
+    public static List<Object> getActivitiesValueList() throws Exception {
+        Object activities = getActivities();
         return toValueList(activities);
     }
 
-    private static List<Object> toValueList(Object mActivities) throws Exception {
-        if (mActivities == null) {
+    private static List<Object> toValueList(Object activities) throws Exception {
+        if (activities == null) {
             throw new NullPointerException("mActivities can't be null");
         }
         List<Object> list = new ArrayList<>();
-        if (mActivities instanceof Map) {
+        if (activities instanceof Map) {
             @SuppressWarnings("unchecked")
-            Map<Object, Object> arrayMap = (Map<Object, Object>) mActivities;
+            Map<Object, Object> arrayMap = (Map<Object, Object>) activities;
             for (Map.Entry<Object, Object> entry : arrayMap.entrySet()) {
                 Object value = entry.getValue();
                 list.add(value);
@@ -140,14 +156,14 @@ public final class ApplicationUtils {
         return list;
     }
 
-    private static List<Activity> toActivityList(Object mActivities) throws Exception {
-        if (mActivities == null) {
+    private static List<Activity> toActivityList(Object activities) throws Exception {
+        if (activities == null) {
             return null;
         }
         List<Activity> list = new ArrayList<>();
-        if (mActivities instanceof Map) {
+        if (activities instanceof Map) {
             @SuppressWarnings("unchecked")
-            Map<Object, Object> arrayMap = (Map<Object, Object>) mActivities;
+            Map<Object, Object> arrayMap = (Map<Object, Object>) activities;
             for (Map.Entry<Object, Object> entry : arrayMap.entrySet()) {
                 Object value = entry.getValue();
                 Object o = ReflectUtils.reflect(value, "activity");
