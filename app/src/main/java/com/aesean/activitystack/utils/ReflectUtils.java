@@ -71,10 +71,61 @@ public class ReflectUtils {
         return block.contains("(") && block.endsWith(")");
     }
 
+
+    /**
+     * 辅助工具，用来更简单的通过反射，像写脚本一样更清晰容易的调用和处理Java类。
+     * 处理方式为，把script用.分隔成一组block，然后按从左到右的顺序一个个处理，直到结束或者某个block异常退出，
+     * 没有回滚机制，不支持嵌套（例如不支持：setName(getName())），支持调用静态方法，
+     * 但注意静态方法调用需要用$符号分割目标类，参考示例写法。
+     * <p>
+     * 调用示例：
+     * <p>
+     * ReflectUtils.reflect(application, "mLoadedApk.mActivityThread.mActivities");
+     * <p>
+     * ReflectUtils.reflect(application, "mModel.getName().toString()");
+     * <p>
+     * ReflectUtils.reflect(null, "android.app.ActivityThread$currentApplication()");
+     * <p>
+     *
+     * @param target 需要反射的对象
+     * @param script 脚本
+     * @return 最终结果。注意，如果脚本最后一个block是属性，无论是否需要更新新属性，这里都会返回反射到的对象。
+     * 如果最后一个block是方法，这里会返回方法的处理结果。
+     * @throws Exception 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
+     */
     public static Object reflect(Object target, String script) throws Exception {
         return reflect(target, script, null);
     }
 
+    /**
+     * 辅助工具，用来更简单的通过反射，像写脚本一样更清晰容易的调用和处理Java类。
+     * 处理方式为，把script用.分隔成一组block，然后按从左到右的顺序一个个处理，直到结束或者某个block异常退出，
+     * 没有回滚机制，不支持嵌套（例如不支持：setName(getName())），支持调用静态方法，
+     * 但注意静态方法调用需要用$符号分割目标类，参考示例写法。
+     * <p>
+     * 调用示例：
+     * <p>
+     * ReflectUtils.reflect(application, "mLoadedApk.mActivityThread.mActivities");
+     * <p>
+     * ReflectUtils.reflect(application, "mModel.getName().toString()");
+     * <p>
+     * ReflectUtils.reflect(application, "mModel.setName(%1)", new Object[]{"new_name"});
+     * <p>
+     * ReflectUtils.reflect(null, "android.app.ActivityThread$currentApplication()");
+     * <p>
+     *
+     * @param target 需要反射的对象
+     * @param script 脚本
+     * @param args   实际的参数对象，注意这里会根据args来自动生成参数对象的类类型。
+     *               但是一定注意这里的参数类型必须跟实际反射的方法的参数类型对应，不能是参数类型的子类。
+     *               例如有一个方法为：setContext(Context context)，args这里如果传了一个Context子类，
+     *               比如Activity这里就会出错，因为实际需要反射setContext(Context context)方法，
+     *               但这里会被错误识别为反射setContext(Activity activity)方法。这时候请调用
+     *               {@link #reflect(Object, String, Object[], Class[])}显示指定参数的真实类型。
+     * @return 最终结果。注意，如果脚本最后一个block是属性，无论是否需要更新新属性，这里都会返回反射到的对象。
+     * 如果最后一个block是方法，这里会返回方法的处理结果。
+     * @throws Exception 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
+     */
     public static Object reflect(Object target, String script, Object[] args) throws Exception {
         Class[] classes = null;
         if (args != null) {
@@ -86,6 +137,30 @@ public class ReflectUtils {
         return reflect(target, script, args, classes);
     }
 
+    /**
+     * 辅助工具，用来更简单的通过反射，像写脚本一样更清晰容易的调用和处理Java类。
+     * 处理方式为，把script用.分隔成一组block，然后按从左到右的顺序一个个处理，直到结束或者某个block异常退出，
+     * 没有回滚机制，不支持嵌套（例如不支持：setName(getName())），支持调用静态方法，
+     * 但注意静态方法调用需要用$符号分割目标类，参考示例写法。
+     * <p>
+     * 调用示例：
+     * <p>
+     * ReflectUtils.reflect(application, "mModel.setName(%1).value, new Object[]{"new_name"}, newValue);
+     * <p>
+     *
+     * @param target   需要反射的对象
+     * @param script   脚本
+     * @param args     实际的参数对象，注意这里会根据args来自动生成参数对象的类类型。
+     *                 但是一定注意这里的参数类型必须跟实际反射的方法的参数类型对应，不能是参数类型的子类。
+     *                 例如有一个方法为：setContext(Context context)，args这里如果传了一个Context子类，
+     *                 比如Activity这里就会出错，因为实际需要反射setContext(Context context)方法，
+     *                 但这里会被错误识别为反射setContext(Activity activity)方法。这时候请调用
+     *                 {@link #reflect(Object, String, Object[], Class[], Object)}显示指定参数的真实类型。
+     * @param newValue 如果脚本最后一个block是属性，则会尝试把这个对象赋给反射到的对象
+     * @return 最终结果。注意，如果脚本最后一个block是属性，无论是否需要更新新属性，这里都会返回反射到的对象。
+     * 如果最后一个block是方法，这里会返回方法的处理结果。
+     * @throws Exception 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
+     */
     public static Object reflect(Object target, String script, Object[] args
             , Object newValue) throws Exception {
         script = script.trim();
@@ -107,23 +182,73 @@ public class ReflectUtils {
         return block.substring(0, block.indexOf('('));
     }
 
+    /**
+     * 辅助工具，用来更简单的通过反射，像写脚本一样更清晰容易的调用和处理Java类。
+     * 处理方式为，把script用.分隔成一组block，然后按从左到右的顺序一个个处理，直到结束或者某个block异常退出，
+     * 没有回滚机制，不支持嵌套（例如不支持：setName(getName())），支持调用静态方法，
+     * 但注意静态方法调用需要用$符号分割目标类，参考示例写法。
+     * <p>
+     * 调用示例：
+     * <p>
+     * ReflectUtils.reflect(application, "mModel.setName(%1), new Object[]{"new_name"}, new Class[]{String.class});
+     * <p>
+     *
+     * @param target  需要反射的对象
+     * @param script  脚本
+     * @param args    实际的参数对象
+     * @param classes 参数对象的类类型
+     * @return 最终结果。注意，如果脚本最后一个block是属性，无论是否需要更新新属性，这里都会返回反射到的对象。
+     * 如果最后一个block是方法，这里会返回方法的处理结果。
+     * @throws Exception 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
+     */
     public static Object reflect(Object target, String script, final Object[] args
             , final Class[] classes) throws Exception {
         return reflect(target, script, args, classes, null, false);
     }
 
+    /**
+     * 辅助工具，用来更简单的通过反射，像写脚本一样更清晰容易的调用和处理Java类。
+     * 处理方式为，把script用.分隔成一组block，然后按从左到右的顺序一个个处理，直到结束或者某个block异常退出，
+     * 没有回滚机制，不支持嵌套（例如不支持：setName(getName())），支持调用静态方法，
+     * 但注意静态方法调用需要用$符号分割目标类，参考示例写法。
+     * <p>
+     * 调用示例：
+     * <p>
+     * ReflectUtils.reflect(application, "mModel.setName(%1).value, new Object[]{"new_name"}, new Class[]{String.class}, newValue);
+     * <p>
+     *
+     * @param target   需要反射的对象
+     * @param script   脚本
+     * @param args     实际的参数对象
+     * @param classes  参数对象的类类型
+     * @param newValue 如果脚本最后一个block是属性，则会尝试把这个对象赋给反射到的对象，否则会忽略这个参数
+     * @return 最终结果。注意，如果脚本最后一个block是属性，无论是否需要更新新属性，这里都会返回反射到的对象。
+     * 如果最后一个block是方法，这里会返回方法的处理结果。
+     * @throws Exception 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
+     */
     public static Object reflect(Object target, String script, final Object[] args
             , final Class[] classes, final Object newValue) throws Exception {
         return reflect(target, script, args, classes, newValue, true);
     }
 
     /**
-     * 所有重载方法最终都会进入这个方法。注意，这个方法没有回滚机制，会把.分隔成一组block，
-     * 然后按从左到右的顺序一个个处理。不支持嵌套，不支持调用静态方法。
-     * 仅支持类似调用：
+     * 辅助工具，用来更简单的通过反射，像写脚本一样更清晰容易的调用和处理Java类。
+     * 处理方式为，把script用.分隔成一组block，然后按从左到右的顺序一个个处理，直到结束或者某个block异常退出，
+     * 没有回滚机制，不支持嵌套（例如不支持：setName(getName())），支持调用静态方法，
+     * 但注意静态方法调用需要用$符号分割目标类，参考示例写法。
+     * <p>
+     * 调用示例：
+     * <p>
      * ReflectUtils.reflect(application, "mLoadedApk.mActivityThread.mActivities");
+     * <p>
      * ReflectUtils.reflect(application, "mModel.getName().toString()");
+     * <p>
      * ReflectUtils.reflect(application, "mModel.setName(%1)");
+     * <p>
+     * ReflectUtils.reflect(null, "android.app.ActivityThread$currentApplication()");
+     * <p>
+     * ReflectUtils.reflect(application, "mModel.setName(%1).value, new Object[]{"new_name"}, new Class[]{String.class}, newValue, true);
+     * <p>
      *
      * @param target      需要反射的对象
      * @param script      脚本
@@ -134,9 +259,9 @@ public class ReflectUtils {
      *                    因为可能用户就是需要把目标设置为null
      * @return 最终结果。注意，如果脚本最后一个block是属性，无论是否需要更新新属性，这里都会返回反射到的对象。
      * 如果最后一个block是方法，这里会返回方法的处理结果。
-     * @throws Exception 强制处理异常
+     * @throws Exception 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
      */
-    private static Object reflect(Object target, String script, final Object[] args
+    public static Object reflect(Object target, String script, final Object[] args
             , final Class[] classes, final Object newValue, boolean setNewValue) throws Exception {
         if (script.startsWith(".")) {
             script = script.substring(1, script.length());
