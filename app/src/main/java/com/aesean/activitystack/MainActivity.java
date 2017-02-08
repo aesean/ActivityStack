@@ -18,6 +18,7 @@ package com.aesean.activitystack;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -27,6 +28,7 @@ import com.aesean.activitystack.utils.shake.IRegisterShakeDetector;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements IRegisterShakeDetector {
+    private static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,31 +61,47 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
 
     public void block_200ms(View view) {
         block(200);
+        showBlockTips();
     }
 
     public void block_400ms(View view) {
         block(400);
+        showBlockTips();
     }
 
     public void block_800ms(View view) {
         block(800);
+        showBlockTips();
     }
 
     public void block_1200ms(View view) {
         block(1200);
+        showBlockTips();
     }
 
     public void block_2000ms(View view) {
-        block_1200ms(view);
-        block_400ms(view);
-        block_400ms(view);
+        block(1200);
+        block(400);
+        block(400);
+        showBlockTips();
     }
 
     public void block_5000ms(View view) {
-        block_2000ms(view);
-        block_2000ms(view);
-        block_800ms(view);
-        block_200ms(view);
+        block(2000);
+        block(2000);
+        block(800);
+        block(200);
+        showBlockTips();
+    }
+
+    private void showBlockTips() {
+        if (!BuildConfig.DEBUG) {
+            return;
+        }
+        String msg = "打开Logcat，设置过滤级别为：DEBUG，过滤字符串为：BlockUtils，" +
+                "可以看到BlockUtils检测到的卡顿代码位置。";
+        Log.w(TAG, msg);
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
     }
 
     private void block(long millis) {
