@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.aesean.activitystack;
+package com.aesean.activitystack.utils;
 
 import android.os.Build;
 import android.os.Handler;

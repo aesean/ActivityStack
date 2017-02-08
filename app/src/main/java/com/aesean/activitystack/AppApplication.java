@@ -18,6 +18,7 @@ package com.aesean.activitystack;
 
 import android.app.Application;
 
+import com.aesean.activitystack.utils.BlockUtils;
 import com.aesean.activitystack.utils.LifecycleUtils;
 import com.aesean.activitystack.utils.shake.ShakeManager;
 
