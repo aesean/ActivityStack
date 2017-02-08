@@ -26,7 +26,7 @@ import java.util.Arrays;
  * 一个简单的反射工具类。可以帮助你像写脚本语言一样调用处理java类。
  *
  * @author xl
- * @version V0.1.1
+ * @version V0.2
  * @since 09/01/2017
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
@@ -336,7 +336,7 @@ public class ReflectUtils {
                 if (firstPointIndex == -1) {
                     return invoke;
                 }
-                return reflect(invoke, newScript, args, classes, newValue);
+                return reflect(invoke, newScript, args, classes, newValue, setNewValue);
             } catch (IllegalAccessException e) {
                 throw new ReflectException("类：" + targetClass
                         + "参数类型为" + Arrays.toString(parameterTypes) + "的方法：" + methodName
@@ -375,7 +375,7 @@ public class ReflectUtils {
                 throw new ReflectException("类：" + targetClass
                         + "的属性：" + block + "反射异常，请检查脚本中的：" + script, e);
             }
-            return reflect(o, newScript, args, classes);
+            return reflect(o, newScript, args, classes, newValue, setNewValue);
         }
     }
 
