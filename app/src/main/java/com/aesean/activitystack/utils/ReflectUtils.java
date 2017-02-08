@@ -25,7 +25,7 @@ import java.lang.reflect.Method;
  * 一个简单的反射工具类。可以帮助你像写脚本语言一样调用处理java类。
  *
  * @author xl
- * @version V0.1
+ * @version V0.1.1
  * @since 09/01/2017
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
@@ -76,7 +76,14 @@ public class ReflectUtils {
     }
 
     public static Object reflect(Object target, String script, Object[] args) throws Exception {
-        return reflect(target, script, args, null);
+        Class[] classes = null;
+        if (args != null) {
+            classes = new Class[args.length];
+            for (int i = 0; i < classes.length; i++) {
+                classes[i] = args[i].getClass();
+            }
+        }
+        return reflect(target, script, args, classes);
     }
 
     public static Object reflect(Object target, String script, Object[] args
@@ -134,8 +141,24 @@ public class ReflectUtils {
         if (script.startsWith(".")) {
             script = script.substring(1, script.length());
         }
-        int firstPointIndex = script.indexOf('.');
+
+        final int firstPointIndex;
         final String block;
+        // 生成新的script
+        final String newScript;
+        final Class<?> targetClass;
+        if (target == null) {
+            int classIndex = script.indexOf('$');
+            targetClass = Class.forName(script.substring(0, classIndex));
+            script = script.substring(classIndex + 1, script.length());
+            firstPointIndex = script.indexOf('.');
+            newScript = script.substring(firstPointIndex + 1, script.length());
+        } else {
+            firstPointIndex = script.indexOf('.');
+            targetClass = target.getClass();
+            newScript = script.substring(firstPointIndex + 1, script.length());
+        }
+
         if (firstPointIndex == -1) {
             // 不包含点，则block=字符串本身
             block = script;
@@ -143,18 +166,7 @@ public class ReflectUtils {
             // 拿到第一个需要处理的block
             block = script.substring(0, firstPointIndex);
         }
-        // 生成新的script
-        final String newScript;
-        // ReflectUtils.ReflectException.getInstance();
-        final Class<?> targetClass;
-        if (target == null) {
-            targetClass = Class.forName(block);
-            String sub = script.substring(firstPointIndex + 1, script.length());
-            newScript = sub.substring(sub.indexOf('.') + 1, sub.length());
-        } else {
-            targetClass = target.getClass();
-            newScript = script.substring(firstPointIndex + 1, script.length());
-        }
+
         if (isMethod(block)) {
             String methodName = getMethodName(block);
             final Class<?>[] parameterTypes;
@@ -172,9 +184,30 @@ public class ReflectUtils {
                 parameterTypes = new Class[split.length];
                 arguments = new Object[split.length];
                 for (int i = 0; i < split.length; i++) {
-                    String substring = split[i].substring(split[i].indexOf('%') + 1
+                    int indexOf = split[i].indexOf('%');
+                    String s = "(";
+                    for (int j = 0; j < split.length; j++) {
+                        if (j != 0) {
+                            s += ",%" + (j + 1);
+                        } else {
+                            s += "%" + (j + 1);
+                        }
+                    }
+                    s += ")";
+                    if (indexOf == -1) {
+                        throw new IllegalArgumentException("参数必须用%定义，参考写法：" + methodName
+                                + s + "。请检查脚本中的：" + script);
+                    }
+                    String substring = split[i].substring(indexOf + 1
                             , split[i].length());
-                    int index = Integer.parseInt(substring) - 1;
+                    int index;
+                    try {
+                        index = Integer.parseInt(substring) - 1;
+                    } catch (NumberFormatException e) {
+                        throw new IllegalArgumentException("参数解析错误，" + substring
+                                + "无法转换为数字，参考写法：" + methodName
+                                + s + "。请检查脚本中的：" + script);
+                    }
                     parameterTypes[i] = classes[index];
                     arguments[i] = args[index];
                 }
@@ -182,6 +215,9 @@ public class ReflectUtils {
 
             try {
                 Method method = reflectMethod(targetClass, methodName, parameterTypes);
+                if (!method.isAccessible()) {
+                    method.setAccessible(true);
+                }
                 Object invoke = method.invoke(target, arguments);
                 if (firstPointIndex == -1) {
                     return invoke;
