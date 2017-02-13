@@ -32,42 +32,49 @@
         android:id="@+id/user_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:inputType="text"/>
+        android:inputType="text"
+        android:textAllCaps="false"
+        android:visibility="gone"/>
 
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:onClick="block_200ms"
-        android:text="@string/block_200ms"/>
+        android:text="@string/block_200ms"
+        android:textAllCaps="false"/>
 
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:onClick="block_400ms"
-        android:text="@string/block_400ms"/>
+        android:text="@string/block_400ms"
+        android:textAllCaps="false"/>
 
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:onClick="block_800ms"
-        android:text="@string/block_800ms"/>
+        android:text="@string/block_800ms"
+        android:textAllCaps="false"/>
 
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:onClick="block_1200ms"
-        android:text="@string/block_1200ms"/>
+        android:text="@string/block_1200ms"
+        android:textAllCaps="false"/>
 
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:onClick="block_2000ms"
-        android:text="@string/block_2000ms"/>
+        android:text="@string/block_2000ms"
+        android:textAllCaps="false"/>
 
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:onClick="block_5000ms"
-        android:text="@string/block_5000ms"/>
-
+        android:text="@string/block_5000ms"
+        android:textAllCaps="false"/>
 </LinearLayout>
