@@ -17,6 +17,7 @@
 package com.aesean.activitystack.utils;
 
 import android.os.Build;
+import android.os.Debug;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -35,7 +36,7 @@ import java.util.Locale;
  * 来监控获取主线程执行持续时间,然后通过一个HandlerThread子线程来打印主线程堆栈信息。
  * 由于大部分耗时操作都是通过子线程处理的，基本可以忽略当前监控服务对于主线程性能的影响。
  * {@link #receiveDispatchingMessage()}方法会给WatchHandler发送一个开启监听的消息。
- * WatchHandler会每隔{@link #DUMP_STACK_DELAY_MILLIS}dump一次堆栈数据，
+ * WatchHandler会每隔{@link #mDumpStackDelayMillis}dump一次堆栈数据，
  * 此时如果{@link #receiveFinishedMessage()}检测到没有超时，会通知WatchHandler取消继续dump
  * （这里会有较小概率发生线程安全问题，明明正常finishMessage，WatchHandler还是打印了堆栈，但是不会无限打印）。
  * 如果{@link #receiveFinishedMessage()}没有收到消息，或者收到超时消息，则忽略消息，WatchHandler
@@ -57,25 +58,27 @@ public class BlockUtils {
     /**
      * 卡顿,单位毫秒,这个参数因为子线程也要用,为了避免需要线程同步,所以就static final了,自定义请直接修改这个值.
      */
-    private static final long BLOCK_DELAY_MILLIS = 600;
+    private final long mBlockDelayMillis;
 
     /**
      * 最大处理次数，-1会无限打印，只有收到finish消息的时候才会终止打印。
      */
-    private static final int MAX_POST_TIMES = -1;
+    private final int mMaxPostTimes;
     /**
      * Dump堆栈数据时间间隔,单位毫秒
      */
-    private static final long DUMP_STACK_DELAY_MILLIS = 160;
-    private static final long START_DUMP_STACK_DELAY_MILLIS = 80;
-    private static final long SYNC_DELAY = 0;
+    private final long mDumpStackDelayMillis;
+    private final long mStartDumpStackDelayMillis;
+    private final long mSyncDelay;
 
-    private Looper mWatchLooper;
+    private final boolean mPrintInDebuggerConnected;
+
+    private Looper mTargetLooper;
 
     /**
      * 堆栈内容相同的情况下是否打印
      */
-    private static final boolean PRINT_SAME_STACK = false;
+    private final boolean mPrintSameStack;
 
     /**
      * 起一个子线程,用来打印主线程的堆栈信息.因为是要监控主线程是否有卡顿的,所以主线程现在是无法打印堆栈的,
@@ -85,14 +88,103 @@ public class BlockUtils {
     private Handler mWatchHandler;
     private PrintStaceInfoRunnable mPrintStaceInfoRunnable;
 
-    private long mStartTime;
+    private long mReceiveDispatchingMessageTime;
 
-    private BlockUtils() {
-        this(Looper.myLooper());
+    public static class Builder {
+        private long blockDelayMillis = 600;
+        private int maxPostTimes = -1;
+        private long dumpStackDelayMillis = 160;
+        private long startDumpStackDelayMillis = 80;
+        private long syncDelay = 0;
+        private boolean printInDebuggerConnected = true;
+        private boolean printSameStack = false;
+
+        /**
+         * 卡顿,单位毫秒,这个参数因为子线程也要用,为了避免需要线程同步,所以就static final了,自定义请直接修改这个值.
+         *
+         * @param blockDelayMillis 卡顿间隔，单位毫秒
+         */
+        public void setBlockDelayMillis(long blockDelayMillis) {
+            this.blockDelayMillis = blockDelayMillis;
+        }
+
+        /**
+         * 最大处理次数，-1会无限打印，只有收到finish消息的时候才会终止打印。
+         *
+         * @param maxPostTimes 次数，-1无限打印
+         */
+        public void setMaxPostTimes(int maxPostTimes) {
+            this.maxPostTimes = maxPostTimes;
+        }
+
+        /**
+         * Dump堆栈数据时间间隔,单位毫秒
+         *
+         * @param dumpStackDelayMillis Dump堆栈数据时间间隔,单位毫秒
+         */
+        public void setDumpStackDelayMillis(long dumpStackDelayMillis) {
+            this.dumpStackDelayMillis = dumpStackDelayMillis;
+        }
+
+        /**
+         * 第一次开始Dump堆栈延迟
+         *
+         * @param startDumpStackDelayMillis 延迟，单位毫秒
+         */
+        public void setStartDumpStackDelayMillis(long startDumpStackDelayMillis) {
+            this.startDumpStackDelayMillis = startDumpStackDelayMillis;
+        }
+
+        /**
+         * 跨线程同步延迟
+         *
+         * @param syncDelay 同步延迟，单位毫秒
+         */
+        public void setSyncDelay(long syncDelay) {
+            this.syncDelay = syncDelay;
+        }
+
+        /**
+         * 是否在debug状态继续打印。注意，因为debug时候代码的执行会跟着调试节奏走，
+         * 所以可能会出现一个方法执行时间很长的情况，如果不希望在debug时候打印就设置false
+         *
+         * @param printInDebuggerConnected true，debug状态继续打印，false不打印
+         */
+        public void setPrintInDebuggerConnected(boolean printInDebuggerConnected) {
+            this.printInDebuggerConnected = printInDebuggerConnected;
+        }
+
+        /**
+         * 是否打印相同堆栈数据。
+         *
+         * @param printSameStack true，堆栈数据相同继续打印，false，只打印不同的堆栈数据
+         */
+        public void setPrintSameStack(boolean printSameStack) {
+            this.printSameStack = printSameStack;
+        }
+
+        /**
+         * 只能监控Looper线程，所以这里强制设置Looper
+         *
+         * @param looper 需要监控的线程
+         * @return BlockUtils
+         */
+        public BlockUtils builder(Looper looper) {
+            return new BlockUtils(looper, blockDelayMillis, maxPostTimes
+                    , dumpStackDelayMillis, startDumpStackDelayMillis, syncDelay
+                    , printInDebuggerConnected, printSameStack);
+        }
     }
 
-    public BlockUtils(Looper looper) {
-        mWatchLooper = looper;
+    private BlockUtils(Looper looper, long blockDelayMillis, int maxPostTimes, long dumpStackDelayMillis, long startDumpStackDelayMillis, long syncDelay, boolean printInDebuggerConnected, boolean printSameStack) {
+        mTargetLooper = looper;
+        mBlockDelayMillis = blockDelayMillis;
+        mMaxPostTimes = maxPostTimes;
+        mDumpStackDelayMillis = dumpStackDelayMillis;
+        mStartDumpStackDelayMillis = startDumpStackDelayMillis;
+        mSyncDelay = syncDelay;
+        mPrintInDebuggerConnected = printInDebuggerConnected;
+        mPrintSameStack = printSameStack;
     }
 
     private Printer createBlockPrinter() {
@@ -104,6 +196,9 @@ public class BlockUtils {
 
             @Override
             public void println(String s) {
+                if (!mPrintInDebuggerConnected || Debug.isDebuggerConnected()) {
+                    return;
+                }
                 // 默认不修正，如果实际出现错乱，可以调用下面方法进行修正。
                 // checkMessage(s);
                 // 这里因为Looper.loop方法内会在Handler开始和结束调用这个方法,所以这里也对应两个状态,start和finish
@@ -171,7 +266,7 @@ public class BlockUtils {
     }
 
     private void receiveDispatchingMessage() {
-        mStartTime = System.currentTimeMillis();
+        mReceiveDispatchingMessageTime = System.currentTimeMillis();
         // 如果有出现没有正确收到finishMessage的情况，这里可以每次start强制再处理一次。
         // if (mPrintStaceInfoRunnable != null) {
         //     mPrintStaceInfoRunnable.cancel();
@@ -179,27 +274,19 @@ public class BlockUtils {
         // }
         // 注意当前类所有代码,除了这个方法里的代码,其他全部是在主线程执行.
         mPrintStaceInfoRunnable = new PrintStaceInfoRunnable();
-        mWatchHandler.postDelayed(mPrintStaceInfoRunnable, START_DUMP_STACK_DELAY_MILLIS);
+        mWatchHandler.postDelayed(mPrintStaceInfoRunnable, mStartDumpStackDelayMillis);
     }
 
     private void receiveFinishedMessage() {
         long end = System.currentTimeMillis();
-        long delay = end - mStartTime;
-        if (delay >= BLOCK_DELAY_MILLIS) {
+        long delay = end - mReceiveDispatchingMessageTime;
+        if (delay >= mBlockDelayMillis) {
             Log.w(TAG, "(" + mPrintStaceInfoRunnable.getTag() + ") 检测到超时，App执行本次Handler消息消耗了:" + delay + "ms\n");
         }
         // 这里是主线程，设置cancel后，没有做线程同步，子线程同步数据可能会有延迟。
         mPrintStaceInfoRunnable.cancel();
         mWatchHandler.removeCallbacks(mPrintStaceInfoRunnable);
         mPrintStaceInfoRunnable = null;
-    }
-
-    /**
-     * 使用{@link #install()}代替
-     */
-    @Deprecated
-    public void start() {
-        install();
     }
 
     public void install() {
@@ -209,15 +296,7 @@ public class BlockUtils {
         mWatchThread = new HandlerThread(HANDLER_THREAD_TAG);
         mWatchThread.start();
         mWatchHandler = new Handler(mWatchThread.getLooper());
-        mWatchLooper.setMessageLogging(getInstance().createBlockPrinter());
-    }
-
-    /**
-     * 使用{@link #release()}代替
-     */
-    @Deprecated
-    public void stop() {
-        release();
+        mTargetLooper.setMessageLogging(getInstance().createBlockPrinter());
     }
 
     public void release() {
@@ -228,8 +307,8 @@ public class BlockUtils {
         }
         mWatchThread = null;
         mWatchHandler = null;
-        mWatchLooper.setMessageLogging(null);
-        mWatchLooper = null;
+        mTargetLooper.setMessageLogging(null);
+        mTargetLooper = null;
     }
 
     public static BlockUtils getInstance() {
@@ -237,7 +316,7 @@ public class BlockUtils {
     }
 
     private static class InstanceHolder {
-        private static final BlockUtils sInstance = new BlockUtils(Looper.getMainLooper());
+        private static final BlockUtils sInstance = new Builder().builder(Looper.getMainLooper());
     }
 
     private class PrintStaceInfoRunnable implements Runnable {
@@ -250,10 +329,10 @@ public class BlockUtils {
         private boolean mCancel = false;
         private StringBuilder mStackInfo = new StringBuilder();
 
-        private Thread mDumpThread = mWatchLooper.getThread();
+        private Thread mDumpThread = mTargetLooper.getThread();
 
         private boolean isTimeOut() {
-            return System.currentTimeMillis() - mStartMillis > BLOCK_DELAY_MILLIS + SYNC_DELAY;
+            return System.currentTimeMillis() - mStartMillis > mBlockDelayMillis + mSyncDelay;
         }
 
         private String getTag() {
@@ -295,8 +374,8 @@ public class BlockUtils {
             }
             recordTimes();
             //noinspection ConstantConditions
-            if (mPostTimes < MAX_POST_TIMES || MAX_POST_TIMES == -1) {
-                mWatchHandler.postDelayed(this, DUMP_STACK_DELAY_MILLIS);
+            if (mPostTimes < mMaxPostTimes || mMaxPostTimes == -1) {
+                mWatchHandler.postDelayed(this, mDumpStackDelayMillis);
             }
 
             String timeHead = newTimeHead();
@@ -315,7 +394,7 @@ public class BlockUtils {
                     }
                     stack += timeHead + dumpStack;
                 } else {
-                    if (!equalsLastDump) {
+                    if (mPrintSameStack || !equalsLastDump) {
                         stack += timeHead + dumpStack;
                     }
                 }
@@ -324,7 +403,7 @@ public class BlockUtils {
                     printStackTraceInfo(stack);
                 }
             } else {
-                if (!equalsLastDump) {
+                if (mPrintSameStack || !equalsLastDump) {
                     mStackInfo.append(PART_SEPARATOR).append(timeHead).append(dumpStack);
                 }
             }
