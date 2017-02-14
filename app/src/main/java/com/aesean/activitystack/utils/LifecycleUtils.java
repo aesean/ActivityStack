@@ -37,22 +37,55 @@ import java.util.Arrays;
  */
 @SuppressWarnings("unused")
 public class LifecycleUtils {
-    private static final String TAG = "LifecycleUtils";
+    private String mTag;
     private Application mApplication;
 
-    public LifecycleUtils(Application application) {
+    public static class Builder {
+        private String tag = "LifecycleUtils";
+        private Application application;
+
+        public void setTag(String tag) {
+            this.tag = tag;
+        }
+
+        public void setApplication(Application application) {
+            this.application = application;
+        }
+
+        public LifecycleUtils build() {
+            if (application == null) {
+                try {
+                    application = ApplicationUtils.getApplication();
+                } catch (ReflectUtils.ReflectException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return new LifecycleUtils(application, tag);
+        }
+    }
+
+    public String getTag() {
+        return mTag;
+    }
+
+    public void setTag(String tag) {
+        mTag = tag;
+    }
+
+    private LifecycleUtils(Application application, String tag) {
         if (application == null) {
             throw new NullPointerException("application can not be null");
         }
         mApplication = application;
+        mTag = tag;
     }
 
-    private static String toString(Object... objects) {
+    private String toString(Object... objects) {
         return Arrays.toString(objects);
     }
 
-    private static void print(String msg, Object... objects) {
-        Log.d(TAG, msg + ": " + toString(objects));
+    private void print(String msg, Object... objects) {
+        Log.d(mTag, msg + ": " + toString(objects));
     }
 
     public void register() {
@@ -102,7 +135,7 @@ public class LifecycleUtils {
         });
     }
 
-    private static void unregisterFragmentLifecycleCallback(Activity activity
+    private void unregisterFragmentLifecycleCallback(Activity activity
             , FragmentManager.FragmentLifecycleCallbacks callbacks) {
         if (callbacks != null && activity instanceof FragmentActivity) {
             FragmentManager supportFragmentManager = ((FragmentActivity) activity).getSupportFragmentManager();
@@ -110,7 +143,7 @@ public class LifecycleUtils {
         }
     }
 
-    private static FragmentManager.FragmentLifecycleCallbacks registerFragmentLifecycleCallback(Activity activity) {
+    private FragmentManager.FragmentLifecycleCallbacks registerFragmentLifecycleCallback(Activity activity) {
         if (activity instanceof FragmentActivity) {
             FragmentManager supportFragmentManager = ((FragmentActivity) activity).getSupportFragmentManager();
             FragmentManager.FragmentLifecycleCallbacks fragmentLifecycleCallbacks
@@ -143,7 +176,7 @@ public class LifecycleUtils {
                 // @Override
                 // public void onFragmentViewCreated(FragmentManager fm, Fragment f, View v, Bundle savedInstanceState) {
                 //     super.onFragmentViewCreated(fm, f, v, savedInstanceState);
-                //     Log.d(TAG, "onFragmentViewCreated: " + LifecycleUtils.toString(f));
+                //     Log.d(mTag, "onFragmentViewCreated: " + LifecycleUtils.toString(f));
                 // }
 
                 @Override

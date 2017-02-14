@@ -51,7 +51,9 @@ public class AppApplication extends Application {
         if (!BuildConfig.DEBUG) {
             return;
         }
-        new LifecycleUtils(this).register();
+        new LifecycleUtils.Builder()
+                .build()
+                .register();
         new ShakeManager(this).registerShakeDetector();
         BlockUtils.getInstance().install();
     }
