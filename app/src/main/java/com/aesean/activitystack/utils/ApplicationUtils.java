@@ -38,20 +38,54 @@ import java.util.Map;
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 public final class ApplicationUtils {
+    /**
+     * 获取当前App所有Activity的引用。
+     * <p>
+     * 注意：当前List是无序List，Activity在List中的排列顺序并不代表
+     * Activity在ActivityStack中的顺序。如果需要获取栈顶Activity，请调用{@link #getTopActivity()}方法。
+     *
+     * @return Activity列表，获取不到的时候将返回null。
+     * @throws ReflectUtils.ReflectException 可能会发生异常，强制要求处理异常情况。
+     */
+    public static List<Activity> getActivities() throws ReflectUtils.ReflectException {
+        return getActivities(getActivitiesInActivityThread());
+    }
 
-    public static List<Activity> getActivitiesByApplication() throws Exception {
-        Object activities = getActivities();
-        if (activities != null) {
-            return toActivityList(activities);
+    /**
+     * 获取当前App所有Activity的引用。
+     * <p>
+     * 注意：当前List是无序List，Activity在List中的排列顺序并不代表
+     * Activity在ActivityStack中的顺序。如果需要获取栈顶Activity，请调用{@link #getTopActivity()}方法。
+     *
+     * @param mActivities ActivityThread中的mActivities
+     * @return Activity列表，获取不到的时候将返回null。
+     * @throws ReflectUtils.ReflectException 可能会发生异常，强制要求处理异常情况。
+     */
+    public static List<Activity> getActivities(Object mActivities) throws ReflectUtils.ReflectException {
+        if (mActivities != null) {
+            return toActivityList(mActivities);
         }
         return null;
     }
 
-    public static Activity getTopActivity() throws Exception {
+    /**
+     * 获取栈顶Activity引用。
+     *
+     * @return 栈顶Activity，获取不到的时候将返回null。
+     * @throws ReflectUtils.ReflectException 可能会发生异常，强制要求处理异常情况。
+     */
+    public static Activity getTopActivity() throws ReflectUtils.ReflectException {
         return getTopActivity(getApplication());
     }
 
-    public static Activity getTopActivity(Application application) throws Exception {
+    /**
+     * 获取栈顶Activity引用。
+     *
+     * @param application application
+     * @return 栈顶Activity，获取不到的时候将返回null。
+     * @throws ReflectUtils.ReflectException 可能会发生异常，强制要求处理异常情况。
+     */
+    public static Activity getTopActivity(Application application) throws ReflectUtils.ReflectException {
         ActivityManager activityManager = (ActivityManager) application.getSystemService(Context.ACTIVITY_SERVICE);
         String topActivity = null;
         String packageName = application.getPackageName();
@@ -75,7 +109,7 @@ public final class ApplicationUtils {
             }
         }
         if (TextUtils.isEmpty(topActivity)) return null;
-        List<Activity> activities = getActivitiesByApplication();
+        List<Activity> activities = getActivities(getActivitiesInActivityThread());
         if (activities != null) {
             for (Activity activity : activities) {
                 if (topActivity.equals(activity.getClass().getName())) {
@@ -86,15 +120,27 @@ public final class ApplicationUtils {
         return null;
     }
 
+    /**
+     * 获取ActivityThread对象
+     *
+     * @return ActivityThread被添加hide，所以这里是返回Object类型。
+     * @throws ReflectUtils.ReflectException 可能会发生异常，强制要求处理异常情况。
+     */
     public static Object getActivityThread() throws ReflectUtils.ReflectException {
         return ReflectUtils.reflect(null, "android.app.ActivityThread#currentActivityThread()");
     }
 
+    /**
+     * 获取当前App的Application对象
+     *
+     * @return 当前App的Application对象。
+     * @throws ReflectUtils.ReflectException 可能会发生异常，强制要求处理异常情况。
+     */
     public static Application getApplication() throws ReflectUtils.ReflectException {
         return (Application) ReflectUtils.reflect(null, "android.app.ActivityThread#currentApplication()");
     }
 
-    public static Object getActivities() throws ReflectUtils.ReflectException {
+    private static Object getActivitiesInActivityThread() throws ReflectUtils.ReflectException {
         return ReflectUtils.reflect(null, "android.app.ActivityThread#currentActivityThread().mActivities");
     }
 
@@ -114,12 +160,7 @@ public final class ApplicationUtils {
 //            return mActivitiesField.get(mActivityThread);
 //    }
 
-    public static List<Object> getActivitiesKeyList() throws Exception {
-        Object activities = getActivities();
-        return toKeyList(activities);
-    }
-
-    private static List<Object> toKeyList(Object activities) {
+    public static List<Object> toKeyList(Object activities) {
         if (activities == null) {
             throw new NullPointerException("mActivities can't be null");
         }
@@ -135,12 +176,7 @@ public final class ApplicationUtils {
         return list;
     }
 
-    public static List<Object> getActivitiesValueList() throws Exception {
-        Object activities = getActivities();
-        return toValueList(activities);
-    }
-
-    private static List<Object> toValueList(Object activities) throws Exception {
+    public static List<Object> toValueList(Object activities) throws Exception {
         if (activities == null) {
             throw new NullPointerException("mActivities can't be null");
         }
@@ -156,7 +192,7 @@ public final class ApplicationUtils {
         return list;
     }
 
-    private static List<Activity> toActivityList(Object activities) throws Exception {
+    private static List<Activity> toActivityList(Object activities) throws ReflectUtils.ReflectException {
         if (activities == null) {
             return null;
         }
