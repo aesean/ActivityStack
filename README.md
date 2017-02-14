@@ -22,6 +22,6 @@
 打印Activity和Fragment生命周期的工具，利用了系统Api，对Activity和Fragment是0侵入。如果项目非常大了，一些界面很可能不是自己维护的，要找到某个界面对应的类，看源码可能效率不是很高，可以用这个类非常简单快速的定位界面对应的类。
 <pre><code>new LifecycleUtils(this).register();</code></pre>
 
-## [ShakeManager](https://github.com/aesean/ActivityStack/blob/master/app/src/main/java/com/aesean/activitystack/utils/ShakeManager.java "ShakeManager")
+## [ShakeManager](https://github.com/aesean/ActivityStack/blob/master/app/src/main/java/com/aesean/activitystack/utils/shake/ShakeManager.java "ShakeManager")
 这个是从Facebook的ReactNative中偷过来的。ReactNative里可以通过摇一摇手机然后弹一个弹窗辅助开发。比如某个界面需要手动输入的东西非常多。这时候可以写一个自动填充的代码，然后通过摇一摇弹出菜单，点击调用代码。
 <pre><code>new ShakeManager(this).registerShakeDetector();</code></pre>
