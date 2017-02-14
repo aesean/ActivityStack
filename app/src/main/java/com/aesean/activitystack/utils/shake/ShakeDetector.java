@@ -64,7 +64,7 @@ public class ShakeDetector implements SensorEventListener {
             mMagnitudes = new double[MAX_SAMPLES];
             mTimestamps = new long[MAX_SAMPLES];
 
-            mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+            mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
         } else {
             Log.e(TAG, "错误，当前手机无法获取：ACCELEROMETER传感器，摇一摇功能异常。");
         }
