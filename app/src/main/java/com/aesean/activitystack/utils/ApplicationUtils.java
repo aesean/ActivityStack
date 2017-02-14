@@ -22,6 +22,7 @@ import android.app.Application;
 import android.content.Context;
 import android.os.Build;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +39,8 @@ import java.util.Map;
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 public final class ApplicationUtils {
+    private static final String TAG = "ApplicationUtils";
+
     /**
      * 获取当前App所有Activity的引用。
      * <p>
@@ -72,21 +75,66 @@ public final class ApplicationUtils {
      * 获取栈顶Activity引用。
      *
      * @return 栈顶Activity，获取不到的时候将返回null。
-     * @throws ReflectUtils.ReflectException 可能会发生异常，强制要求处理异常情况。
      */
-    public static Activity getTopActivity() throws ReflectUtils.ReflectException {
-        return getTopActivity(getApplication());
+    public static Activity getTopActivity() {
+        try {
+            List<Activity> activities = getActivities();
+            return getTopActivity(activities);
+        } catch (ReflectUtils.ReflectException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
      * 获取栈顶Activity引用。
      *
-     * @param application application
+     * @param activities 所有的Activity列表
      * @return 栈顶Activity，获取不到的时候将返回null。
+     */
+    public static Activity getTopActivity(List<Activity> activities) {
+        try {
+            Activity activity = getTopActivityByIsTopOfTask(activities);
+            if (activity != null) {
+                return activity;
+            }
+        } catch (ReflectUtils.ReflectException e) {
+            e.printStackTrace();
+        }
+        try {
+            Activity activity = getTopActivityByResume(activities);
+            if (activity != null) {
+                return activity;
+            }
+        } catch (ReflectUtils.ReflectException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            Activity activity = getTopActivityByActivityManager(getApplication(), activities);
+            if (activity != null) {
+                return activity;
+            }
+        } catch (ReflectUtils.ReflectException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * 通过ActivityManager拿到栈顶Activity的ClassName，然后跟列表中的Activity比对，获取栈顶Activity。
+     * 注意：这种方式有个很严重的缺陷，如果某个Activity在栈里多次出现将导致判断错误，这时候将返回null。
+     * 可靠性相对一般，不会返回错误结果。
+     *
+     * @param application application
+     * @param activities  所有的Activity列表
+     * @return 栈顶Activity，获取不到的时候将返回null，不会返回错误结果。
      * @throws ReflectUtils.ReflectException 可能会发生异常，强制要求处理异常情况。
      */
-    public static Activity getTopActivity(Application application) throws ReflectUtils.ReflectException {
-        ActivityManager activityManager = (ActivityManager) application.getSystemService(Context.ACTIVITY_SERVICE);
+    public static Activity getTopActivityByActivityManager(Context application
+            , List<Activity> activities) throws ReflectUtils.ReflectException {
+        ActivityManager activityManager = (ActivityManager) application
+                .getSystemService(Context.ACTIVITY_SERVICE);
         String topActivity = null;
         String packageName = application.getPackageName();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -108,15 +156,71 @@ public final class ApplicationUtils {
                 }
             }
         }
-        if (TextUtils.isEmpty(topActivity)) return null;
-        List<Activity> activities = getActivities(getActivitiesInActivityThread());
+        if (TextUtils.isEmpty(topActivity)) {
+            Log.i(TAG, "尝试通过getTopActivityByActivityManager获取Activity失败");
+            return null;
+        }
+
+        boolean check = false;
+        Activity result = null;
         if (activities != null) {
             for (Activity activity : activities) {
                 if (topActivity.equals(activity.getClass().getName())) {
-                    return activity;
+                    if (check) {
+                        // 出现重复Activity，返回null
+                        Log.i(TAG, "尝试通过getTopActivityByActivityManager获取Activity失败");
+                        return null;
+                    }
+                    check = true;
+                    result = activity;
                 }
             }
         }
+        if (result == null) {
+            Log.w(TAG, "尝试通过getTopActivityByActivityManager获取Activity失败");
+        } else {
+            Log.i(TAG, "尝试通过getTopActivityByActivityManager获取Activity成功");
+        }
+        return result;
+    }
+
+    /**
+     * 通过反射Activity的isTopOfTask方法来获取栈顶Activity引用。可靠性相对最好，不会返回错误结果。
+     *
+     * @param activities 所有的Activity列表
+     * @return 栈顶Activity，获取不到的时候将返回null，不会返回错误结果。
+     * @throws ReflectUtils.ReflectException 可能会发生异常，强制要求处理异常情况。
+     */
+    public static Activity getTopActivityByIsTopOfTask(List<Activity> activities)
+            throws ReflectUtils.ReflectException {
+        for (Activity activity : activities) {
+            boolean isTop = (boolean) ReflectUtils.reflect(activity, "isTopOfTask()");
+            if (isTop) {
+                Log.i(TAG, "尝试通过getTopActivityByIsTopOfTask获取Activity成功");
+                return activity;
+            }
+        }
+        Log.w(TAG, "尝试通过getTopActivityByIsTopOfTask获取Activity失败");
+        return null;
+    }
+
+    /**
+     * 通过反射Activity的isTopOfTask方法来获取栈顶Activity引用。可靠性相对一般。
+     *
+     * @param activities 所有的Activity列表
+     * @return 栈顶Activity，获取不到的时候将返回null，可能会返回错误结果。
+     * @throws ReflectUtils.ReflectException 可能会发生异常，强制要求处理异常情况。
+     */
+    public static Activity getTopActivityByResume(List<Activity> activities)
+            throws ReflectUtils.ReflectException {
+        for (Activity activity : activities) {
+            boolean isTop = (boolean) ReflectUtils.reflect(activity, "mResumed");
+            if (isTop) {
+                Log.i(TAG, "尝试通过getTopActivityByResume获取Activity成功");
+                return activity;
+            }
+        }
+        Log.w(TAG, "尝试通过getTopActivityByResume获取Activity失败");
         return null;
     }
 

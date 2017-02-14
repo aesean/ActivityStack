@@ -18,7 +18,6 @@ package com.aesean.activitystack.utils.shake;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Application;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -56,12 +55,7 @@ public final class ShakeManager implements ShakeDetector.ShakeListener {
         this(context, new IGetActivity() {
             @Override
             public Activity getActivity() {
-                try {
-                    return ApplicationUtils.getTopActivity((Application) context.getApplicationContext());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                return null;
+                return ApplicationUtils.getTopActivity();
             }
         });
     }
