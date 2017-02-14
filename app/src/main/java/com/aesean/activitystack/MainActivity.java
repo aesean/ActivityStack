@@ -16,6 +16,7 @@
 
 package com.aesean.activitystack;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -23,6 +24,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.aesean.activitystack.utils.ApplicationUtils;
 import com.aesean.activitystack.utils.shake.IRegisterShakeDetector;
 
 import java.util.Map;
@@ -55,6 +57,17 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
             public void run() {
                 Toast.makeText(MainActivity.this, "模拟自动登录，可以安全放心的把账号密码写到这里，" +
                         "发布release的时候，这里的代码会被自动删除。", Toast.LENGTH_LONG).show();
+            }
+        });
+        map.put("TopActivity", new Runnable() {
+            @Override
+            public void run() {
+                Activity topActivity = ApplicationUtils.getTopActivity();
+                String msg = null;
+                if (topActivity != null) {
+                    msg = topActivity.getClass().getName();
+                }
+                Toast.makeText(MainActivity.this, "TopActivity is " + msg, Toast.LENGTH_LONG).show();
             }
         });
     }

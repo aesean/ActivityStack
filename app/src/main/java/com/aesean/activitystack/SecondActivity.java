@@ -16,14 +16,39 @@
 
 package com.aesean.activitystack;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.widget.Toast;
 
-public class SecondActivity extends AppCompatActivity {
+import com.aesean.activitystack.utils.ApplicationUtils;
+import com.aesean.activitystack.utils.shake.IRegisterShakeDetector;
+
+import java.util.Map;
+
+public class SecondActivity extends AppCompatActivity implements IRegisterShakeDetector {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_second);
+    }
+
+    @Override
+    public void registerShakeDetector(Map<String, Object> map) {
+        if (!BuildConfig.DEBUG) {
+            return;
+        }
+        map.put("TopActivity", new Runnable() {
+            @Override
+            public void run() {
+                Activity topActivity = ApplicationUtils.getTopActivity();
+                String msg = null;
+                if (topActivity != null) {
+                    msg = topActivity.getClass().getName();
+                }
+                Toast.makeText(SecondActivity.this, "TopActivity is " + msg, Toast.LENGTH_LONG).show();
+            }
+        });
     }
 }
