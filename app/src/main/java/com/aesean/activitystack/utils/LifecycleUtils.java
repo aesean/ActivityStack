@@ -44,12 +44,14 @@ public class LifecycleUtils {
         private String tag = "LifecycleUtils";
         private Application application;
 
-        public void setTag(String tag) {
+        public Builder setTag(String tag) {
             this.tag = tag;
+            return this;
         }
 
-        public void setApplication(Application application) {
+        public Builder setApplication(Application application) {
             this.application = application;
+            return this;
         }
 
         public LifecycleUtils build() {
