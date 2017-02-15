@@ -34,7 +34,7 @@
         android:layout_height="wrap_content"
         android:inputType="text"
         android:textAllCaps="false"
-        android:visibility="gone"/>
+        android:visibility="visible"/>
 
     <Button
         android:layout_width="match_parent"
