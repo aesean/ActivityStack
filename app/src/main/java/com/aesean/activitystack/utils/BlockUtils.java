@@ -72,6 +72,7 @@ public class BlockUtils {
     private final long mSyncDelay;
 
     private final boolean mPrintInDebuggerConnected;
+    private final IPrinter mPrinter;
 
     private Looper mTargetLooper;
 
@@ -98,6 +99,7 @@ public class BlockUtils {
         private long syncDelay = 0;
         private boolean printInDebuggerConnected = false;
         private boolean printSameStack = false;
+        private IPrinter printer;
 
         /**
          * 卡顿,单位毫秒,这个参数因为子线程也要用,为了避免需要线程同步,所以就static final了,自定义请直接修改这个值.
@@ -172,11 +174,13 @@ public class BlockUtils {
         public BlockUtils builder(Looper looper) {
             return new BlockUtils(looper, blockDelayMillis, maxPostTimes
                     , dumpStackDelayMillis, startDumpStackDelayMillis, syncDelay
-                    , printInDebuggerConnected, printSameStack);
+                    , printInDebuggerConnected, printSameStack, printer);
         }
     }
 
-    private BlockUtils(Looper looper, long blockDelayMillis, int maxPostTimes, long dumpStackDelayMillis, long startDumpStackDelayMillis, long syncDelay, boolean printInDebuggerConnected, boolean printSameStack) {
+    private BlockUtils(Looper looper, long blockDelayMillis, int maxPostTimes
+            , long dumpStackDelayMillis, long startDumpStackDelayMillis, long syncDelay
+            , boolean printInDebuggerConnected, boolean printSameStack, IPrinter printer) {
         mTargetLooper = looper;
         mBlockDelayMillis = blockDelayMillis;
         mMaxPostTimes = maxPostTimes;
@@ -185,6 +189,7 @@ public class BlockUtils {
         mSyncDelay = syncDelay;
         mPrintInDebuggerConnected = printInDebuggerConnected;
         mPrintSameStack = printSameStack;
+        mPrinter = printer;
     }
 
     private Printer createBlockPrinter() {
@@ -418,11 +423,26 @@ public class BlockUtils {
 
         private void printStackTraceInfo(String info) {
             String[] split = info.split(PART_SEPARATOR);
-            for (String s : split) {
-                if (!TextUtils.isEmpty(s)) {
-                    Log.d(TAG, s + "\n");
+            if (mPrinter == null) {
+                for (String s : split) {
+                    if (!TextUtils.isEmpty(s)) {
+                        Log.d(TAG, s + "\n");
+                    }
+                }
+            } else {
+                for (String s : split) {
+                    if (!TextUtils.isEmpty(s)) {
+                        String msg = s + "\n";
+                        if (!mPrinter.print(msg)) {
+                            Log.d(TAG, msg);
+                        }
+                    }
                 }
             }
         }
+    }
+
+    public interface IPrinter {
+        boolean print(String msg);
     }
 }
