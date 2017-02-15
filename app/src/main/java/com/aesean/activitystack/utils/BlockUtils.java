@@ -96,7 +96,7 @@ public class BlockUtils {
         private long dumpStackDelayMillis = 160;
         private long startDumpStackDelayMillis = 80;
         private long syncDelay = 0;
-        private boolean printInDebuggerConnected = true;
+        private boolean printInDebuggerConnected = false;
         private boolean printSameStack = false;
 
         /**
