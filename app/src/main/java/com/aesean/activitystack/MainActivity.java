@@ -18,6 +18,7 @@ package com.aesean.activitystack;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.os.Debug;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -109,6 +110,9 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
 
     private void showBlockTips() {
         if (!BuildConfig.DEBUG) {
+            return;
+        }
+        if (Debug.isDebuggerConnected()) {
             return;
         }
         String msg = "打开Logcat，设置过滤级别为：DEBUG，过滤字符串为：BlockUtils，" +
