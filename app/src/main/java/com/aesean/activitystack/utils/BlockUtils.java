@@ -71,6 +71,8 @@ public class BlockUtils {
     private final long mStartDumpStackDelayMillis;
     private final long mSyncDelay;
 
+    private boolean mRunning = false;
+
     private final boolean mPrintInDebuggerConnected;
     private final IPrinter mPrinter;
 
@@ -286,12 +288,23 @@ public class BlockUtils {
         long end = System.currentTimeMillis();
         long delay = end - mReceiveDispatchingMessageTime;
         if (delay >= mBlockDelayMillis) {
-            Log.w(TAG, "(" + mPrintStaceInfoRunnable.getTag() + ") 检测到超时，App执行本次Handler消息消耗了:" + delay + "ms\n");
+            String msg = "(" + mPrintStaceInfoRunnable.getTag() + ") 检测到超时，App执行本次Handler消息消耗了:" + delay + "ms\n";
+            if (mPrinter != null) {
+                if (!mPrinter.print(msg)) {
+                    Log.w(TAG, msg);
+                }
+            } else {
+                Log.w(TAG, msg);
+            }
         }
         // 这里是主线程，设置cancel后，没有做线程同步，子线程同步数据可能会有延迟。
         mPrintStaceInfoRunnable.cancel();
         mWatchHandler.removeCallbacks(mPrintStaceInfoRunnable);
         mPrintStaceInfoRunnable = null;
+    }
+
+    public boolean isRunning() {
+        return mRunning;
     }
 
     public void install() {
@@ -302,6 +315,7 @@ public class BlockUtils {
         mWatchThread.start();
         mWatchHandler = new Handler(mWatchThread.getLooper());
         mTargetLooper.setMessageLogging(getInstance().createBlockPrinter());
+        mRunning = true;
     }
 
     public void release() {
@@ -314,6 +328,7 @@ public class BlockUtils {
         mWatchHandler = null;
         mTargetLooper.setMessageLogging(null);
         mTargetLooper = null;
+        mRunning = false;
     }
 
     public static BlockUtils getInstance() {
