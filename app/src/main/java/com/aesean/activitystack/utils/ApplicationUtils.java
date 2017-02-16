@@ -45,6 +45,12 @@ import java.util.Map;
 public final class ApplicationUtils {
     private static final String TAG = "ApplicationUtils";
 
+    /**
+     * 重启App，如果可以拿到application，推荐使用{@link #restartApplication(Context, int)}方法，
+     *
+     * @param delay 当前App被杀死之后，延迟多久重新启动。
+     * @return true 重启成功，false 重启失败
+     */
     public static boolean restartApplication(int delay) {
         try {
             restartApplication(getApplication(), delay);
@@ -55,10 +61,21 @@ public final class ApplicationUtils {
         }
     }
 
+    /**
+     * 重启App
+     *
+     * @param context application
+     */
     public static void restartApplication(Context context) {
         restartApplication(context, 500);
     }
 
+    /**
+     * 重启App
+     *
+     * @param context application
+     * @param delay   当前App被杀死之后，延迟多久重新启动。
+     */
     public static void restartApplication(Context context, int delay) {
         Intent intent = context.getPackageManager()
                 .getLaunchIntentForPackage(context.getPackageName());
