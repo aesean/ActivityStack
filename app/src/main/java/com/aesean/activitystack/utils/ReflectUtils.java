@@ -253,15 +253,19 @@ public class ReflectUtils {
         if (target == null) {
             int classIndex = script.indexOf('#');
             if (classIndex == -1) {
+                int sIndex = script.lastIndexOf("$");
+                classIndex = script.indexOf('.', sIndex);
+            }
+            if (classIndex == -1) {
                 throw new ReflectException("处理静态类必须用#符号分割目标类，" +
-                        "例如：android.app.ActivityThread#currentApplication()，请检查脚本：" + script);
+                        "例如：android.app.ActivityThread#currentApplication()，" +
+                        "或者使用$表示静态内部类，例如：com.abc$def.ghi。", script);
             }
             String className = script.substring(0, classIndex);
             try {
                 targetClass = Class.forName(className);
             } catch (ClassNotFoundException e) {
-                throw new ReflectException("异常，无法找到类：" + className
-                        + "，请检查脚本：" + script, e);
+                throw new ReflectException("无法找到类：" + className + "。", script, e);
             }
             script = script.substring(classIndex + 1, script.length());
             firstPointIndex = script.indexOf('.');
@@ -309,7 +313,7 @@ public class ReflectUtils {
                     s += ")";
                     if (indexOf == -1) {
                         throw new ReflectException("参数必须用%定义，参考写法：" + methodName
-                                + s + "。请检查脚本中的：" + script);
+                                + s + "。", script);
                     }
                     String substring = split[i].substring(indexOf + 1
                             , split[i].length());
@@ -318,8 +322,7 @@ public class ReflectUtils {
                         index = Integer.parseInt(substring) - 1;
                     } catch (NumberFormatException e) {
                         throw new ReflectException("参数解析错误，" + substring
-                                + "无法转换为数字，参考写法：" + methodName
-                                + s + "。请检查脚本中的：" + script);
+                                + "无法转换为数字，参考写法：" + methodName + s + "。", script);
                     }
                     parameterTypes[i] = classes[index];
                     arguments[i] = args[index];
@@ -340,15 +343,14 @@ public class ReflectUtils {
             } catch (IllegalAccessException e) {
                 throw new ReflectException("类：" + targetClass
                         + "参数类型为" + Arrays.toString(parameterTypes) + "的方法：" + methodName
-                        + "，调用异常" + "的方法，请检查脚本中的：" + script, e);
+                        + "，调用异常" + "的方法，", script, e);
             } catch (NoSuchMethodException e) {
                 throw new ReflectException("无法在类：" + targetClass
-                        + "及其父类，找到方法：" + methodName
-                        + "。请检查脚本中的：" + script);
+                        + "及其父类，找到方法：" + methodName + "。", script);
             } catch (InvocationTargetException e) {
                 throw new ReflectException("在类：" + targetClass
                         + "执行方法：" + methodName
-                        + "发生异常。请检查脚本中的：" + script);
+                        + "发生异常。", script);
             }
         } else {
             Field field;
@@ -356,8 +358,7 @@ public class ReflectUtils {
                 field = reflectField(targetClass, block);
             } catch (NoSuchFieldException e) {
                 throw new ReflectException("无法在类：" + targetClass
-                        + "及其父类，找到属性：" + block
-                        + "。请检查脚本中的：" + script);
+                        + "及其父类，找到属性：" + block, script);
             }
             if (!field.isAccessible()) {
                 field.setAccessible(true);
@@ -373,7 +374,7 @@ public class ReflectUtils {
                 }
             } catch (IllegalAccessException e) {
                 throw new ReflectException("类：" + targetClass
-                        + "的属性：" + block + "反射异常，请检查脚本中的：" + script, e);
+                        + "的属性：" + block + "反射异常。", script, e);
             }
             return reflect(o, newScript, args, classes, newValue, setNewValue);
         }
@@ -407,12 +408,20 @@ public class ReflectUtils {
          *
          * @param s the detail message.
          */
+        public ReflectException(String s, String errorScript) {
+            super(s + "错误位置：" + errorScript);
+        }
+
         public ReflectException(String s) {
             super(s);
         }
 
         public ReflectException(Throwable cause) {
             super(cause);
+        }
+
+        public ReflectException(String message, String errorScript, Throwable cause) {
+            super(message + "错误位置：" + errorScript, cause);
         }
 
         public ReflectException(String message, Throwable cause) {
