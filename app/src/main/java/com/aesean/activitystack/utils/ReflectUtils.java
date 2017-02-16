@@ -72,6 +72,39 @@ public class ReflectUtils {
      * ReflectUtils.reflect(null, "android.app.ActivityThread#currentApplication()");
      * <p>
      *
+     * @param target   需要反射的对象
+     * @param script   脚本
+     * @param newValue 如果脚本包含参数会将这个对象作为方法参数解析。否则，如果脚本最后一个block是属性，
+     *                 无论是否需要更新新属性，这里都会返回反射到的对象。
+     *                 如果最后一个block是方法，这里会返回方法的处理结果。
+     * @return 最终结果。
+     * @throws ReflectException 反射有可能发生任何未知的异常，所以这里强制要求处理异常。
+     */
+    public static Object reflect(Object target, String script, Object newValue) throws ReflectException {
+        int lastPoint = script.lastIndexOf('.');
+        String lastBlock = script.substring(lastPoint);
+        if (script.contains("%")) {
+            return reflect(target, script, new Object[]{newValue});
+        } else {
+            return reflect(target, script, null, null, newValue);
+        }
+    }
+
+    /**
+     * 辅助工具，用来更简单的通过反射，像写脚本一样更清晰容易的调用和处理Java类。
+     * 处理方式为，把script用.分隔成一组block，然后按从左到右的顺序一个个处理，直到结束或者某个block异常退出，
+     * 没有回滚机制，不支持嵌套（例如不支持：setName(getName())），支持调用静态方法，
+     * 但注意静态方法调用需要用#符号分割目标类，参考示例写法。
+     * <p>
+     * 调用示例：
+     * <p>
+     * ReflectUtils.reflect(application, "mLoadedApk.mActivityThread.mActivities");
+     * <p>
+     * ReflectUtils.reflect(application, "mModel.getName().toString()");
+     * <p>
+     * ReflectUtils.reflect(null, "android.app.ActivityThread#currentApplication()");
+     * <p>
+     *
      * @param target 需要反射的对象
      * @param script 脚本
      * @return 最终结果。注意，如果脚本最后一个block是属性，无论是否需要更新新属性，这里都会返回反射到的对象。
@@ -300,6 +333,20 @@ public class ReflectUtils {
                 String[] split = paramStr.split(",");
                 parameterTypes = new Class[split.length];
                 arguments = new Object[split.length];
+                if (args == null) {
+                    throw new ReflectException("检测到方法：" + methodName + "包含参数，但实际指定的参数为null。", script);
+                }
+                if (args.length < split.length) {
+                    throw new ReflectException("检测到方法：" + methodName + "包含" + split.length
+                            + "个参数，但实际指定的参数长度不够：" + args.length + "。", script);
+                }
+                if (classes == null) {
+                    throw new ReflectException("检测到方法：" + methodName + "包含参数，但实际指定的参数类型为null。", script);
+                }
+                if (classes.length < split.length) {
+                    throw new ReflectException("检测到方法：" + methodName + "包含" + split.length
+                            + "个参数，但实际指定的参数类型长度不够：" + args.length + "。", script);
+                }
                 for (int i = 0; i < split.length; i++) {
                     int indexOf = split[i].indexOf('%');
                     String s = "(";
@@ -319,7 +366,7 @@ public class ReflectUtils {
                             , split[i].length());
                     int index;
                     try {
-                        index = Integer.parseInt(substring) - 1;
+                        index = Integer.parseInt(substring);
                     } catch (NumberFormatException e) {
                         throw new ReflectException("参数解析错误，" + substring
                                 + "无法转换为数字，参考写法：" + methodName + s + "。", script);
