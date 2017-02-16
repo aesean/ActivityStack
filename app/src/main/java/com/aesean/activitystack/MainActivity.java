@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.os.Debug;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -37,6 +38,11 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        return super.onKeyDown(keyCode, event);
     }
 
     @Override
@@ -58,6 +64,12 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
             public void run() {
                 Toast.makeText(MainActivity.this, "模拟自动登录，可以安全放心的把账号密码写到这里，" +
                         "发布release的时候，这里的代码会被自动删除。", Toast.LENGTH_LONG).show();
+            }
+        });
+        map.put("重启App", new Runnable() {
+            @Override
+            public void run() {
+                ((AppApplication) getApplication()).restart();
             }
         });
         map.put("TopActivity", new Runnable() {

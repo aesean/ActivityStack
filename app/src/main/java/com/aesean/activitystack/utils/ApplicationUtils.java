@@ -18,9 +18,13 @@ package com.aesean.activitystack.utils;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.AlarmManager;
 import android.app.Application;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
+import android.os.Process;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -40,6 +44,34 @@ import java.util.Map;
 @SuppressWarnings({"WeakerAccess", "unused"})
 public final class ApplicationUtils {
     private static final String TAG = "ApplicationUtils";
+
+    public static boolean restartApplication(int delay) {
+        try {
+            restartApplication(getApplication(), delay);
+            return true;
+        } catch (ReflectUtils.ReflectException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static void restartApplication(Context context) {
+        restartApplication(context, 500);
+    }
+
+    public static void restartApplication(Context context, int delay) {
+        Intent intent = context.getPackageManager()
+                .getLaunchIntentForPackage(context.getPackageName());
+        PendingIntent restartIntent = PendingIntent.getActivity(context.getApplicationContext(), 0
+                , intent, PendingIntent.FLAG_ONE_SHOT);
+        AlarmManager mgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            mgr.setExact(AlarmManager.RTC, System.currentTimeMillis() + delay, restartIntent);
+        } else {
+            mgr.set(AlarmManager.RTC, System.currentTimeMillis() + delay, restartIntent);
+        }
+        Process.killProcess(Process.myPid());
+    }
 
     /**
      * 获取当前App所有Activity的引用。
