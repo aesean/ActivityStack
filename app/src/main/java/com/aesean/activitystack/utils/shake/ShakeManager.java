@@ -140,13 +140,17 @@ public final class ShakeManager implements ShakeDetector.ShakeListener {
                 if (obj instanceof Class) {
                     try {
                         // 检查是否是Activity的子类
-                        if (Activity.class.isAssignableFrom((Class) obj)) {
-                            Intent intent = new Intent(activity, (Class) obj);
+                        Class clazz = (Class) obj;
+                        if (Activity.class.isAssignableFrom(clazz)) {
+                            Intent intent = new Intent(activity, clazz);
                             activity.startActivity(intent);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
+                }
+                if (obj instanceof Intent) {
+                    activity.startActivity((Intent) obj);
                 }
                 if (obj instanceof DialogInterface.OnClickListener) {
                     ((DialogInterface.OnClickListener) obj).onClick(dialog, which);
