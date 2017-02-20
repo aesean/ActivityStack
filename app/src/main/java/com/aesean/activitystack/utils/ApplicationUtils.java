@@ -196,16 +196,6 @@ public final class ApplicationUtils {
             }
         }
         if (TextUtils.isEmpty(topActivity)) {
-            @SuppressWarnings("deprecation")
-            List<ActivityManager.RunningTaskInfo> runningTasks = activityManager.getRunningTasks(10);
-            for (ActivityManager.RunningTaskInfo runningTask : runningTasks) {
-                if (packageName.equals(runningTask.topActivity.getPackageName())) {
-                    topActivity = runningTask.topActivity.getClassName();
-                    break;
-                }
-            }
-        }
-        if (TextUtils.isEmpty(topActivity)) {
             Log.i(TAG, "尝试通过getTopActivityByActivityManager获取Activity失败");
             return null;
         }
