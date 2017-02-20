@@ -25,6 +25,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Process;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -82,10 +83,12 @@ public final class ApplicationUtils {
         PendingIntent restartIntent = PendingIntent.getActivity(context.getApplicationContext(), 0
                 , intent, PendingIntent.FLAG_ONE_SHOT);
         AlarmManager mgr = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        int type = AlarmManager.ELAPSED_REALTIME_WAKEUP;
+        long triggerTime = SystemClock.elapsedRealtime() + delay;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            mgr.setExact(AlarmManager.RTC, System.currentTimeMillis() + delay, restartIntent);
+            mgr.setExact(type, triggerTime, restartIntent);
         } else {
-            mgr.set(AlarmManager.RTC, System.currentTimeMillis() + delay, restartIntent);
+            mgr.set(type, triggerTime, restartIntent);
         }
         Process.killProcess(Process.myPid());
     }
