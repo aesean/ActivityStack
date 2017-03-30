@@ -39,6 +39,10 @@
         </activity>
         <activity android:name=".SecondActivity">
         </activity>
+
+        <service
+            android:name=".LaunchActivityService"
+            android:process=":launch_activity_service"/>
     </application>
 
 </manifest>
