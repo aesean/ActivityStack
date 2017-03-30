@@ -1,10 +1,10 @@
 # ActivityStack    
 这个项目有什么用呢？其实没什么用，但其实也很有用。主要是一些跟具体项目无关的工具类。
 
-## [BlockUtils](https://github.com/aesean/ActivityStack/blob/master/app/src/main/java/com/aesean/activitystack/utils/BlockUtils.java "BlockUtils")
+## [ThreadMonitor](https://github.com/aesean/ActivityStack/blob/master/app/src/main/java/com/aesean/activitystack/utils/ThreadMonitor.java "BlockUtils")
 一个通过Looper.setMessageLogging来监听HandlerMessage消息实现的监控主线程是否出现卡顿的工具。
 #### 注意由于原理是监控的Handler消息的处理，所以如果有代码在主线程执行时候没有经过Handler处理，那将监控不到，比如触摸事件，触摸事件是在nativePollOnce里直接跳转到WindowInputEventReceiver#dispatchInputEvent方法，完全没有经过Handler，所以触摸事件将无法监控到。
-<pre><code>BlockUtils.getInstance().install();</code></pre>
+<pre><code>ThreadMonitor.getInstance().install();</code></pre>
 
 ## [ReflectUtils](https://github.com/aesean/ActivityStack/blob/master/app/src/main/java/com/aesean/activitystack/utils/ReflectUtils.java "ReflectUtils")
 一个反射工具类，可以类似写脚本一样反射java属性和方法。
