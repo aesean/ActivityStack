@@ -149,7 +149,7 @@ public class LifecycleUtils {
         if (activity instanceof FragmentActivity) {
             FragmentManager supportFragmentManager = ((FragmentActivity) activity).getSupportFragmentManager();
             FragmentManager.FragmentLifecycleCallbacks fragmentLifecycleCallbacks
-                    = supportFragmentManager.new FragmentLifecycleCallbacks() {
+                    = new FragmentManager.FragmentLifecycleCallbacks() {
 
                 @Override
                 public void onFragmentPreAttached(FragmentManager fm, Fragment f, Context context) {

@@ -17,8 +17,11 @@
 package com.aesean.activitystack;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Debug;
+import android.os.Process;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -66,10 +69,16 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
                         "发布release的时候，这里的代码会被自动删除。", Toast.LENGTH_LONG).show();
             }
         });
-        map.put("重启App", new Runnable() {
+        map.put("重启App（Alarm）", new Runnable() {
             @Override
             public void run() {
                 ((AppApplication) getApplication()).restart();
+            }
+        });
+        map.put("重启App（Service）", new Runnable() {
+            @Override
+            public void run() {
+                restartApplicationByService(MainActivity.this, 500);
             }
         });
         map.put("TopActivity", new Runnable() {
@@ -83,6 +92,15 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
                 Toast.makeText(MainActivity.this, "TopActivity is " + msg, Toast.LENGTH_LONG).show();
             }
         });
+    }
+
+    private static void restartApplicationByService(Context context, long delay) {
+        Intent intent = context.getPackageManager()
+                .getLaunchIntentForPackage(context.getPackageName());
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        Intent service = LaunchActivityService.create(context, intent, delay);
+        context.startService(service);
+        Process.killProcess(Process.myPid());
     }
 
     public void block_200ms(View view) {

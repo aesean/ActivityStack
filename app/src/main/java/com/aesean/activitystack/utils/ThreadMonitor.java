@@ -29,9 +29,10 @@ import android.util.Printer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 /**
- * BlockUtils
+ * ThreadMonitor
  * 原理大致就是:通过{@link Looper#setMessageLogging(Printer)}方法,监测Handler打印消息之间间隔的时间,
  * 来监控获取主线程执行持续时间,然后通过一个HandlerThread子线程来打印主线程堆栈信息。
  * 由于大部分耗时操作都是通过子线程处理的，基本可以忽略当前监控服务对于主线程性能的影响。
@@ -47,8 +48,8 @@ import java.util.Locale;
  * @since 16/8/15
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class BlockUtils {
-    private static final String TAG = "BlockUtils";
+public class ThreadMonitor {
+    private static final String TAG = "ThreadMonitor";
     private static final String HANDLER_THREAD_TAG = "watch_handler_thread";
     /**
      * 用于分割字符串,LogCat对打印的字符串长度有限制
@@ -90,26 +91,30 @@ public class BlockUtils {
     private HandlerThread mWatchThread;
     private Handler mWatchHandler;
     private PrintStaceInfoRunnable mPrintStaceInfoRunnable;
-
     private long mReceiveDispatchingMessageTime;
 
+    private String mFilter;
+
     public static class Builder {
-        private long blockDelayMillis = 600;
+        private long blockDelayMillis = 400;
         private int maxPostTimes = -1;
-        private long dumpStackDelayMillis = 160;
-        private long startDumpStackDelayMillis = 80;
+        private long dumpStackDelayMillis = 100;
+        private long startDumpStackDelayMillis = 20;
         private long syncDelay = 0;
-        private boolean printInDebuggerConnected = false;
+        private boolean printInDebuggerConnected = true;
         private boolean printSameStack = false;
-        private IPrinter printer;
+        private IPrinter printer = null;
+        private Looper looper;
+        private String filter;
 
         /**
          * 卡顿,单位毫秒,这个参数因为子线程也要用,为了避免需要线程同步,所以就static final了,自定义请直接修改这个值.
          *
          * @param blockDelayMillis 卡顿间隔，单位毫秒
          */
-        public void setBlockDelayMillis(long blockDelayMillis) {
+        public Builder setBlockDelayMillis(long blockDelayMillis) {
             this.blockDelayMillis = blockDelayMillis;
+            return this;
         }
 
         /**
@@ -117,8 +122,9 @@ public class BlockUtils {
          *
          * @param maxPostTimes 次数，-1无限打印
          */
-        public void setMaxPostTimes(int maxPostTimes) {
+        public Builder setMaxPostTimes(int maxPostTimes) {
             this.maxPostTimes = maxPostTimes;
+            return this;
         }
 
         /**
@@ -126,8 +132,9 @@ public class BlockUtils {
          *
          * @param dumpStackDelayMillis Dump堆栈数据时间间隔,单位毫秒
          */
-        public void setDumpStackDelayMillis(long dumpStackDelayMillis) {
+        public Builder setDumpStackDelayMillis(long dumpStackDelayMillis) {
             this.dumpStackDelayMillis = dumpStackDelayMillis;
+            return this;
         }
 
         /**
@@ -135,8 +142,9 @@ public class BlockUtils {
          *
          * @param startDumpStackDelayMillis 延迟，单位毫秒
          */
-        public void setStartDumpStackDelayMillis(long startDumpStackDelayMillis) {
+        public Builder setStartDumpStackDelayMillis(long startDumpStackDelayMillis) {
             this.startDumpStackDelayMillis = startDumpStackDelayMillis;
+            return this;
         }
 
         /**
@@ -144,8 +152,9 @@ public class BlockUtils {
          *
          * @param syncDelay 同步延迟，单位毫秒
          */
-        public void setSyncDelay(long syncDelay) {
+        public Builder setSyncDelay(long syncDelay) {
             this.syncDelay = syncDelay;
+            return this;
         }
 
         /**
@@ -154,8 +163,9 @@ public class BlockUtils {
          *
          * @param printInDebuggerConnected true，debug状态继续打印，false不打印
          */
-        public void setPrintInDebuggerConnected(boolean printInDebuggerConnected) {
+        public Builder setPrintInDebuggerConnected(boolean printInDebuggerConnected) {
             this.printInDebuggerConnected = printInDebuggerConnected;
+            return this;
         }
 
         /**
@@ -163,24 +173,53 @@ public class BlockUtils {
          *
          * @param printSameStack true，堆栈数据相同继续打印，false，只打印不同的堆栈数据
          */
-        public void setPrintSameStack(boolean printSameStack) {
+        public Builder setPrintSameStack(boolean printSameStack) {
             this.printSameStack = printSameStack;
+            return this;
         }
 
         /**
-         * 只能监控Looper线程，所以这里强制设置Looper
+         * 设置需要监控的线程
          *
-         * @param looper 需要监控的线程
-         * @return BlockUtils
+         * @param looper 需要监控线程的Looper
          */
-        public BlockUtils builder(Looper looper) {
-            return new BlockUtils(looper, blockDelayMillis, maxPostTimes
-                    , dumpStackDelayMillis, startDumpStackDelayMillis, syncDelay
-                    , printInDebuggerConnected, printSameStack, printer);
+        public Builder setLooper(Looper looper) {
+            this.looper = looper;
+            return this;
+        }
+
+        public Builder setFilter(String filter) {
+            this.filter = filter;
+            return this;
+        }
+
+        /**
+         * 构建BlockUtils对象
+         *
+         * @return ThreadMonitor
+         */
+        public ThreadMonitor builder() {
+            if (looper == null) {
+                throw new NullPointerException("Looper can't be null. Please setLooper()");
+            }
+            return new ThreadMonitor(this);
         }
     }
 
-    private BlockUtils(Looper looper, long blockDelayMillis, int maxPostTimes
+    private ThreadMonitor(Builder builder) {
+        mTargetLooper = builder.looper;
+        mBlockDelayMillis = builder.blockDelayMillis;
+        mMaxPostTimes = builder.maxPostTimes;
+        mDumpStackDelayMillis = builder.dumpStackDelayMillis;
+        mStartDumpStackDelayMillis = builder.startDumpStackDelayMillis;
+        mSyncDelay = builder.syncDelay;
+        mPrintInDebuggerConnected = builder.printInDebuggerConnected;
+        mPrintSameStack = builder.printSameStack;
+        mPrinter = builder.printer;
+        mFilter = builder.filter;
+    }
+
+    private ThreadMonitor(Looper looper, long blockDelayMillis, int maxPostTimes
             , long dumpStackDelayMillis, long startDumpStackDelayMillis, long syncDelay
             , boolean printInDebuggerConnected, boolean printSameStack, IPrinter printer) {
         mTargetLooper = looper;
@@ -194,7 +233,7 @@ public class BlockUtils {
         mPrinter = printer;
     }
 
-    private Printer createBlockPrinter() {
+    private Printer createMessagePrinter() {
         return new Printer() {
             /**
              * 纪录当前Printer回调的状态,注意这里初始状态必须是true.
@@ -203,7 +242,7 @@ public class BlockUtils {
 
             @Override
             public void println(String s) {
-                if (!mPrintInDebuggerConnected || Debug.isDebuggerConnected()) {
+                if (!mPrintInDebuggerConnected && Debug.isDebuggerConnected()) {
                     return;
                 }
                 // 默认不修正，如果实际出现错乱，可以调用下面方法进行修正。
@@ -314,7 +353,7 @@ public class BlockUtils {
         mWatchThread = new HandlerThread(HANDLER_THREAD_TAG);
         mWatchThread.start();
         mWatchHandler = new Handler(mWatchThread.getLooper());
-        mTargetLooper.setMessageLogging(getInstance().createBlockPrinter());
+        mTargetLooper.setMessageLogging(createMessagePrinter());
         mRunning = true;
     }
 
@@ -331,12 +370,12 @@ public class BlockUtils {
         mRunning = false;
     }
 
-    public static BlockUtils getInstance() {
+    public static ThreadMonitor getInstance() {
         return InstanceHolder.sInstance;
     }
 
     private static class InstanceHolder {
-        private static final BlockUtils sInstance = new Builder().builder(Looper.getMainLooper());
+        private static final ThreadMonitor sInstance = new Builder().setLooper(Looper.getMainLooper()).builder();
     }
 
     private class PrintStaceInfoRunnable implements Runnable {
@@ -383,8 +422,27 @@ public class BlockUtils {
             return (mLastDumpStack == stack) || (mLastDumpStack != null && mLastDumpStack.equals(stack));
         }
 
+        private String getFilter() {
+            return mFilter;
+        }
+
         private String dumpStack() {
-            return BlockUtils.dumpStack(getDumpThread());
+            String stack = ThreadMonitor.dumpStack(getDumpThread()) + "\n";
+            String[] split = stack.split("\n");
+            StringBuilder result = new StringBuilder();
+            String filter = getFilter();
+            if (filter != null && !filter.equals("")) {
+                for (int i = 0; i < split.length; i++) {
+                    if (Pattern.matches(filter, split[i])) {
+                        result.append(split[i]).append("\n");
+                    }
+                }
+            } else {
+                for (int i = 0; i < split.length; i++) {
+                    result.append(split[i]).append("\n");
+                }
+            }
+            return result.toString();
         }
 
         @Override

@@ -19,8 +19,8 @@ package com.aesean.activitystack;
 import android.app.Application;
 
 import com.aesean.activitystack.utils.ApplicationUtils;
-import com.aesean.activitystack.utils.BlockUtils;
 import com.aesean.activitystack.utils.LifecycleUtils;
+import com.aesean.activitystack.utils.ThreadMonitor;
 import com.aesean.activitystack.utils.shake.ShakeManager;
 
 /**
@@ -56,7 +56,7 @@ public class AppApplication extends Application {
                 .build()
                 .register();
         new ShakeManager(this).registerShakeDetector();
-        BlockUtils.getInstance().install();
+        ThreadMonitor.getInstance().install();
     }
 
     public void restart() {
