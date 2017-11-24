@@ -1,5 +1,12 @@
 # ActivityStack    
 这个项目有什么用呢？其实没什么用，但其实也很有用。主要是一些跟具体项目无关的工具类。
+## [Evaluate](https://github.com/aesean/ActivityStack/blob/master/Evaluate)
+增加一些工具代码，可以辅助定位界面所在Acitivity和Fragment。
+* 以debug方式运行App，并让App进入任意一个断点
+* 打开 https://github.com/aesean/ActivityStack/blob/master/Evaluate 这个文件，复制里面所有代码。
+* 使用快捷键 Option+F8 或者点击图中红色按钮，将代码粘贴到弹出到窗口中，点击绿色框的Evaluate
+<img src="https://github.com/aesean/ActivityStack/blob/master/evaluate.png" alt="GitHub" title="Evaluate" width="990" height="600" />
+
 
 ## [ThreadMonitor](https://github.com/aesean/ActivityStack/blob/master/app/src/main/java/com/aesean/activitystack/utils/ThreadMonitor.java "BlockUtils")
 一个通过Looper.setMessageLogging来监听HandlerMessage消息实现的监控主线程是否出现卡顿的工具。
