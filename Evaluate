@@ -1,6 +1,7 @@
 // Evaluate
 Class clazz = Class.forName("android.app.ActivityThread");
-java.lang.reflect.Method method = clazz.getMethod("currentActivityThread");
+java.lang.reflect.Method method = clazz.getDeclaredMethod("currentActivityThread");
+method.setAccessible(true);
 Object activityThread = method.invoke(null);
 java.lang.reflect.Field filed = clazz.getDeclaredField("mActivities");
 filed.setAccessible(true);
@@ -14,7 +15,7 @@ for (java.util.Map.Entry<Object, Object> entry : arrayMap.entrySet()) {
     activityField.setAccessible(true);
     android.app.Activity activity = (android.app.Activity) activityField.get(value);
     java.lang.reflect.Field mResumedField = android.app.Activity.class.getDeclaredField("mResumed");
-    filed.setAccessible(true);
+    mResumedField.setAccessible(true);
     if (mResumedField.get(activity) == Boolean.TRUE) {
         result[0] = "Top Activity is ";
         result[1] = activity;
