@@ -77,4 +77,11 @@
         android:onClick="block_5000ms"
         android:text="@string/block_5000ms"
         android:textAllCaps="false"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="openShowMoreAnimationActivity"
+        android:text="@string/open_show_more_animation_activity"
+        android:textAllCaps="false"/>
 </LinearLayout>

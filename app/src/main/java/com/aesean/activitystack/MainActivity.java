@@ -158,4 +158,8 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
             e.printStackTrace();
         }
     }
+
+    public void openShowMoreAnimationActivity(View view) {
+        startActivity(new Intent(this, ShowMoreAnimationActivityActivity.class));
+    }
 }
