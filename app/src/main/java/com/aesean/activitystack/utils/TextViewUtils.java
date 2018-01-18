@@ -61,6 +61,10 @@ public class TextViewUtils {
 
     public static void setMaxLineWithAnimation(final TextView textView, final int maxLine) {
         int targetHeight = TextViewUtils.getTargetHeight(textView, textView.getText(), maxLine);
+        if (targetHeight < 0) {
+            textView.setMaxLines(maxLine);
+            return;
+        }
         animatorToHeight(textView, targetHeight, new AnimatorListenerAdapter() {
             public void onAnimationStart(Animator animation) {
                 super.onAnimationStart(animation);
