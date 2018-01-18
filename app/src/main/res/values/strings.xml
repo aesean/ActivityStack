@@ -24,4 +24,11 @@
     <string name="block_1200ms">block_1200ms</string>
     <string name="block_2000ms">block_2000ms</string>
     <string name="block_5000ms">block_5000ms</string>
+    <string name="open_show_more_animation_activity">openShowMoreAnimationActivity</string>
+    <string name="show_more_tips">- Show more with animation -</string>
+    <string name="sample_text">"欧阳峰（独白）：离开白驼山之后，我去了这个沙漠，开始了另一种生活。
+　　欧阳峰（独白）：初六日，惊蛰。每年这个时候，都会有一个人来找我喝酒，他的名字叫黄药师。这个人很奇怪，每次总从东边而来，这习惯已经维持了好多年。今年，他给我带了一份手信。
+　　黄药师：不久前，我遇上一个人，送给我一坛酒，她说那叫"醉生梦死"，喝了之后，可以叫你忘掉以做过的任何事。我很奇怪，为什么会有这样的酒。她说人最大的烦恼，就是记性太好，如果什么都可以忘掉，以后的每一天将会是一个新的开始，那你说这有多开心。这坛酒本来打算送给你的，看起来，我们要分来喝了。
+　　欧阳峰（独白）：对于太古怪的东西，我向来很难接受，所以这坛"醉生梦死"我一直没有喝。可能这酒真的有效，从那天晚上开始，黄药师开始忘记了很多事情。"</string>
+    <string name="toggle">toggle</string>
 </resources>
