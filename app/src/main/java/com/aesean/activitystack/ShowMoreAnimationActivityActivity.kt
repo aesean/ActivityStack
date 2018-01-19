@@ -20,7 +20,7 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.widget.TextView
-import com.aesean.activitystack.extensions.setMaxLineWithAnimation
+import com.aesean.activitystack.extensions.setMaxLinesWithAnimation
 
 class ShowMoreAnimationActivityActivity : AppCompatActivity() {
 
@@ -37,7 +37,7 @@ class ShowMoreAnimationActivityActivity : AppCompatActivity() {
     }
 
     fun toggle(view: View) {
-        mTextView.setMaxLineWithAnimation(if (mTextView.maxLines == 3) {
+        mTextView.setMaxLinesWithAnimation(if (mTextView.maxLines == 3) {
             Int.MAX_VALUE
         } else {
             3

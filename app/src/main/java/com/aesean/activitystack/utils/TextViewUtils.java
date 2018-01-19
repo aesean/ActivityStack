@@ -33,6 +33,8 @@ import android.text.TextPaint;
 import android.util.Log;
 import android.widget.TextView;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.reflect.Method;
 import java.util.Hashtable;
 
@@ -59,13 +61,16 @@ public class TextViewUtils {
     private static RectF TEMP_RECT_F = new RectF();
     private static TextPaint sTempTextPaint;
 
-    public static void setMaxLineWithAnimation(final TextView textView, final int maxLine) {
-        int targetHeight = TextViewUtils.getTargetHeight(textView, textView.getText(), maxLine);
-        if (targetHeight < 0) {
+    public static void setMaxLinesWithAnimation(@NotNull final TextView textView, final int maxLine) {
+        measureTextHeight(textView, textView.getText().toString());
+
+        final int textHeight = measureTextHeight(textView, textView.getText(), maxLine);
+        if (textHeight < 0) {
+            // measure failed. setMaxLines directly.
             textView.setMaxLines(maxLine);
             return;
         }
-        targetHeight += textView.getCompoundPaddingBottom() + textView.getCompoundPaddingTop();
+        final int targetHeight = textHeight + textView.getCompoundPaddingBottom() + textView.getCompoundPaddingTop();
         animatorToHeight(textView, targetHeight, new AnimatorListenerAdapter() {
             public void onAnimationStart(Animator animation) {
                 super.onAnimationStart(animation);
@@ -79,7 +84,7 @@ public class TextViewUtils {
         });
     }
 
-    public static void animatorToHeight(final TextView textView, int h, Animator.AnimatorListener listener) {
+    public static void animatorToHeight(@NotNull final TextView textView, int h, @Nullable Animator.AnimatorListener listener) {
         final int height = textView.getHeight();
         if (height == h) {
             return;
@@ -100,23 +105,23 @@ public class TextViewUtils {
         valueAnimator.start();
     }
 
-    public static int getTargetHeight(TextView textView, CharSequence text) {
-        return getTargetHeight(textView, text, Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN ? textView.getMaxLines() : -1);
+    public static int measureTextHeight(@NotNull TextView textView, @NotNull CharSequence text) {
+        return measureTextHeight(textView, text, Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN ? textView.getMaxLines() : Integer.MAX_VALUE);
     }
 
-    public static int getTargetHeight(TextView textView, CharSequence text, int maxLines) {
+    public static int measureTextHeight(@NotNull TextView textView, @NotNull CharSequence text, int maxLines) {
         if (sTempTextPaint == null) {
             sTempTextPaint = new TextPaint();
         }
         sTempTextPaint.set(textView.getPaint());
         sTempTextPaint.setTextSize(textView.getTextSize());
 
-        final int targetHeight = getTargetHeight(textView, text, sTempTextPaint, maxLines);
+        final int targetHeight = measureTextHeight(textView, text, sTempTextPaint, maxLines);
         sTempTextPaint.reset();
         return targetHeight;
     }
 
-    public static int getTargetHeight(TextView textView, CharSequence text, TextPaint textPaint, int maxLines) {
+    public static int measureTextHeight(@NotNull TextView textView, @NotNull CharSequence text, @NotNull TextPaint textPaint, int maxLines) {
         final boolean horizontallyScrolling = invokeAndReturnWithDefault(textView, "getHorizontallyScrolling", false);
         final int availableWidth = horizontallyScrolling
                 ? VERY_WIDE
