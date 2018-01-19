@@ -51,10 +51,10 @@ public class TextViewUtils {
     private static final String TAG = "TextViewUtils";
     private static Hashtable<String, Method> sTextViewMethodByNameCache = new Hashtable<>();
 
-    /**
-     * ms
-     */
-    private static final long DURATION = 300;
+    private static final long DURATION = 600;       // ms
+    private static final long MIN_DURATION = 100;   // ms
+    private static final long MAX_DURATION = 1000;  // ms
+    private static final long BASE_HEIGHT = 1000;   // px
 
     // horizontal scrolling is activated.
     private static final int VERY_WIDE = 1024 * 1024;
@@ -94,7 +94,8 @@ public class TextViewUtils {
         }
         ValueAnimator valueAnimator = new ValueAnimator();
         valueAnimator.setIntValues(height, h);
-        valueAnimator.setDuration(DURATION);
+        long duration = makeDuration(h, height);
+        valueAnimator.setDuration(duration);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -107,6 +108,11 @@ public class TextViewUtils {
         }
         valueAnimator.start();
         return valueAnimator;
+    }
+
+    private static long makeDuration(int h, int height) {
+        long d = (long) (DURATION * (Math.abs(h - height) * 1f / BASE_HEIGHT));
+        return Math.max(MIN_DURATION, Math.min(d, MAX_DURATION));
     }
 
     public static int measureTextHeight(@NotNull TextView textView, @NotNull CharSequence text) {
