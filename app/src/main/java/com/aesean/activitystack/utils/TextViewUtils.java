@@ -65,6 +65,7 @@ public class TextViewUtils {
             textView.setMaxLines(maxLine);
             return;
         }
+        targetHeight += textView.getCompoundPaddingBottom() + textView.getCompoundPaddingTop();
         animatorToHeight(textView, targetHeight, new AnimatorListenerAdapter() {
             public void onAnimationStart(Animator animation) {
                 super.onAnimationStart(animation);
