@@ -61,18 +61,19 @@ public class TextViewUtils {
     private static RectF TEMP_RECT_F = new RectF();
     private static TextPaint sTempTextPaint;
 
-    public static void setMaxLinesWithAnimation(@NotNull final TextView textView, final int maxLine) {
+    @Nullable
+    public static ValueAnimator setMaxLinesWithAnimation(@NotNull final TextView textView, final int maxLine) {
         measureTextHeight(textView, textView.getText().toString());
 
         final int textHeight = measureTextHeight(textView, textView.getText(), maxLine);
         if (textHeight < 0) {
             // measure failed. setMaxLines directly.
             textView.setMaxLines(maxLine);
-            return;
+            return null;
         }
         final int minLines = textView.getMinLines();
         final int targetHeight = textHeight + textView.getCompoundPaddingBottom() + textView.getCompoundPaddingTop();
-        animatorToHeight(textView, targetHeight, new AnimatorListenerAdapter() {
+        return animatorToHeight(textView, targetHeight, new AnimatorListenerAdapter() {
             public void onAnimationStart(Animator animation) {
                 super.onAnimationStart(animation);
             }
@@ -85,10 +86,11 @@ public class TextViewUtils {
         });
     }
 
-    public static void animatorToHeight(@NotNull final TextView textView, int h, @Nullable Animator.AnimatorListener listener) {
+    @Nullable
+    public static ValueAnimator animatorToHeight(@NotNull final TextView textView, int h, @Nullable Animator.AnimatorListener listener) {
         final int height = textView.getHeight();
         if (height == h) {
-            return;
+            return null;
         }
         ValueAnimator valueAnimator = new ValueAnimator();
         valueAnimator.setIntValues(height, h);
@@ -104,6 +106,7 @@ public class TextViewUtils {
             valueAnimator.addListener(listener);
         }
         valueAnimator.start();
+        return valueAnimator;
     }
 
     public static int measureTextHeight(@NotNull TextView textView, @NotNull CharSequence text) {
