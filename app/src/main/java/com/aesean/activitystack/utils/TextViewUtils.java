@@ -94,7 +94,9 @@ public class TextViewUtils {
                 textView.setHeight(value);
             }
         });
-        valueAnimator.addListener(listener);
+        if (listener != null) {
+            valueAnimator.addListener(listener);
+        }
         valueAnimator.start();
     }
 
