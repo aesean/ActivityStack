@@ -16,6 +16,7 @@
 
 package com.aesean.activitystack.extensions
 
+import android.animation.ValueAnimator
 import android.widget.TextView
 import com.aesean.activitystack.utils.TextViewUtils
 
@@ -26,6 +27,6 @@ import com.aesean.activitystack.utils.TextViewUtils
  * @version 1.0
  * @since 1/18/18
  */
-fun TextView.setMaxLinesWithAnimation(maxLines: Int) {
-    TextViewUtils.setMaxLinesWithAnimation(this, maxLines)
+fun TextView.setMaxLinesWithAnimation(maxLines: Int): ValueAnimator? {
+    return TextViewUtils.setMaxLinesWithAnimation(this, maxLines)
 }

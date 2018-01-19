@@ -16,6 +16,7 @@
 
 package com.aesean.activitystack
 
+import android.animation.ValueAnimator
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
@@ -34,10 +35,20 @@ class ShowMoreAnimationActivityActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_show_more_animation_activity)
         mTextView = R.id.target_text_view.toView()
+        mTextView.setOnClickListener {
+            toggle()
+        }
     }
 
     fun toggle(view: View) {
-        mTextView.setMaxLinesWithAnimation(if (mTextView.maxLines == 3) {
+        toggle()
+    }
+
+    private var mAnimator: ValueAnimator? = null
+
+    private fun toggle() {
+        mAnimator?.cancel()
+        mAnimator = mTextView.setMaxLinesWithAnimation(if (mTextView.maxLines == 3) {
             Int.MAX_VALUE
         } else {
             3

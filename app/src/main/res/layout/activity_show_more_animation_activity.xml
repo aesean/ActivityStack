@@ -29,14 +29,49 @@
         android:layout_height="wrap_content"
         android:text="@string/show_more_tips" />
 
-    <TextView
-        android:id="@+id/target_text_view"
-        android:layout_width="wrap_content"
+    <android.support.v7.widget.CardView
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#60ff"
-        android:ellipsize="end"
-        android:maxLines="3"
-        android:text="@string/sample_text" />
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp"
+        app:cardMaxElevation="8dp"
+        app:cardPreventCornerOverlap="false"
+        app:cardUseCompatPadding="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/target_text_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toLeftOf="@+id/button"
+                android:layout_toStartOf="@+id/button"
+                android:background="#ccc"
+                android:ellipsize="end"
+                android:maxLines="3"
+                android:text="@string/sample_text" />
+
+            <TextView
+                android:id="@+id/button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:layout_marginLeft="12dp"
+                android:layout_marginStart="12dp"
+                android:background="#6f00"
+                android:gravity="center"
+                android:minHeight="72dp"
+                android:padding="12dp"
+                android:text="Placeholder" />
+        </RelativeLayout>
+    </android.support.v7.widget.CardView>
 
     <Button
         android:layout_width="match_parent"

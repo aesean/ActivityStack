@@ -51,47 +51,51 @@ public class TextViewUtils {
     private static final String TAG = "TextViewUtils";
     private static Hashtable<String, Method> sTextViewMethodByNameCache = new Hashtable<>();
 
-    /**
-     * ms
-     */
-    private static final long DURATION = 300;
+    private static final long DURATION = 600;       // ms
+    private static final long MIN_DURATION = 100;   // ms
+    private static final long MAX_DURATION = 1000;  // ms
+    private static final long BASE_HEIGHT = 1000;   // px
 
     // horizontal scrolling is activated.
     private static final int VERY_WIDE = 1024 * 1024;
     private static RectF TEMP_RECT_F = new RectF();
     private static TextPaint sTempTextPaint;
 
-    public static void setMaxLinesWithAnimation(@NotNull final TextView textView, final int maxLine) {
+    @Nullable
+    public static ValueAnimator setMaxLinesWithAnimation(@NotNull final TextView textView, final int maxLine) {
         measureTextHeight(textView, textView.getText().toString());
 
         final int textHeight = measureTextHeight(textView, textView.getText(), maxLine);
         if (textHeight < 0) {
             // measure failed. setMaxLines directly.
             textView.setMaxLines(maxLine);
-            return;
+            return null;
         }
+        final int minLines = textView.getMinLines();
         final int targetHeight = textHeight + textView.getCompoundPaddingBottom() + textView.getCompoundPaddingTop();
-        animatorToHeight(textView, targetHeight, new AnimatorListenerAdapter() {
+        return animatorToHeight(textView, targetHeight, new AnimatorListenerAdapter() {
             public void onAnimationStart(Animator animation) {
                 super.onAnimationStart(animation);
             }
 
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                textView.setMinLines(0);
+                textView.setMinLines(minLines);
                 textView.setMaxLines(maxLine);
             }
         });
     }
 
-    public static void animatorToHeight(@NotNull final TextView textView, int h, @Nullable Animator.AnimatorListener listener) {
+    @Nullable
+    public static ValueAnimator animatorToHeight(@NotNull final TextView textView, int h, @Nullable Animator.AnimatorListener listener) {
         final int height = textView.getHeight();
         if (height == h) {
-            return;
+            return null;
         }
         ValueAnimator valueAnimator = new ValueAnimator();
         valueAnimator.setIntValues(height, h);
-        valueAnimator.setDuration(DURATION);
+        long duration = makeDuration(h, height);
+        valueAnimator.setDuration(duration);
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
@@ -103,6 +107,12 @@ public class TextViewUtils {
             valueAnimator.addListener(listener);
         }
         valueAnimator.start();
+        return valueAnimator;
+    }
+
+    private static long makeDuration(int h, int height) {
+        long d = (long) (DURATION * (Math.abs(h - height) * 1f / BASE_HEIGHT));
+        return Math.max(MIN_DURATION, Math.min(d, MAX_DURATION));
     }
 
     public static int measureTextHeight(@NotNull TextView textView, @NotNull CharSequence text) {
