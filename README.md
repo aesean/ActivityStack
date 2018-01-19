@@ -1,5 +1,8 @@
 # ActivityStack    
 这个项目有什么用呢？其实没什么用，但其实也很有用。主要是一些跟具体项目无关的工具类。
+## [ShowMoreAniamtion](https://github.com/aesean/ActivityStack/blob/master/app/src/main/java/com/aesean/activitystack/utils/TextViewUtils.java)
+![ShowMoreAniamtion](https://github.com/aesean/ActivityStack/blob/master/show_more_animation.gif)
+
 ## [Evaluate](https://github.com/aesean/ActivityStack/blob/master/Evaluate)
 增加一些工具代码，可以辅助定位界面所在Acitivity和Fragment。
 * 以debug方式运行App，并让App进入任意一个断点
