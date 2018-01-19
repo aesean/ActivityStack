@@ -26,6 +26,6 @@ import com.aesean.activitystack.utils.TextViewUtils
  * @version 1.0
  * @since 1/18/18
  */
-fun TextView.setMaxLineWithAnimation(maxLines: Int) {
-    TextViewUtils.setMaxLineWithAnimation(this, maxLines)
+fun TextView.setMaxLinesWithAnimation(maxLines: Int) {
+    TextViewUtils.setMaxLinesWithAnimation(this, maxLines)
 }
