@@ -34,9 +34,16 @@ class ShowMoreAnimationActivityActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_show_more_animation_activity)
         mTextView = R.id.target_text_view.toView()
+        mTextView.setOnClickListener {
+            toggle()
+        }
     }
 
     fun toggle(view: View) {
+        toggle()
+    }
+
+    private fun toggle() {
         mTextView.setMaxLinesWithAnimation(if (mTextView.maxLines == 3) {
             Int.MAX_VALUE
         } else {

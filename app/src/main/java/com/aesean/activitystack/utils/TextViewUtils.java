@@ -70,6 +70,7 @@ public class TextViewUtils {
             textView.setMaxLines(maxLine);
             return;
         }
+        final int minLines = textView.getMinLines();
         final int targetHeight = textHeight + textView.getCompoundPaddingBottom() + textView.getCompoundPaddingTop();
         animatorToHeight(textView, targetHeight, new AnimatorListenerAdapter() {
             public void onAnimationStart(Animator animation) {
@@ -78,7 +79,7 @@ public class TextViewUtils {
 
             public void onAnimationEnd(Animator animation) {
                 super.onAnimationEnd(animation);
-                textView.setMinLines(0);
+                textView.setMinLines(minLines);
                 textView.setMaxLines(maxLine);
             }
         });
