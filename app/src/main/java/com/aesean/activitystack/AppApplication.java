@@ -19,6 +19,7 @@ package com.aesean.activitystack;
 import android.app.Application;
 
 import com.aesean.activitystack.utils.ApplicationUtils;
+import com.aesean.activitystack.utils.HandlerPrinter;
 import com.aesean.activitystack.utils.LifecycleUtils;
 import com.aesean.activitystack.utils.ThreadMonitor;
 import com.aesean.activitystack.utils.shake.ShakeManager;
@@ -56,7 +57,10 @@ public class AppApplication extends Application {
                 .build()
                 .register();
         new ShakeManager(this).registerShakeDetector();
+        // LooperProxy looperProxy = new LooperProxy(Looper.getMainLooper());
+        // new ThreadMonitor.Builder().setLooperProxy(looperProxy).builder().install();
         ThreadMonitor.getInstance().install();
+        HandlerPrinter.Companion.newInstance(ThreadMonitor.getInstance().getTargetLooperProxy()).start();
     }
 
     public void restart() {

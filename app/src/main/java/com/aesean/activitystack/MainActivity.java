@@ -22,7 +22,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Debug;
 import android.os.Process;
-import androidx.appcompat.app.AppCompatActivity;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -34,8 +33,19 @@ import com.aesean.activitystack.utils.shake.IRegisterShakeDetector;
 
 import java.util.Map;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 public class MainActivity extends AppCompatActivity implements IRegisterShakeDetector {
     private static final String TAG = "MainActivity";
+
+    private static void restartApplicationByService(Context context, long delay) {
+        Intent intent = context.getPackageManager()
+                .getLaunchIntentForPackage(context.getPackageName());
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        Intent service = LaunchActivityService.create(context, intent, delay);
+        context.startService(service);
+        Process.killProcess(Process.myPid());
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,15 +104,6 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
         });
     }
 
-    private static void restartApplicationByService(Context context, long delay) {
-        Intent intent = context.getPackageManager()
-                .getLaunchIntentForPackage(context.getPackageName());
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        Intent service = LaunchActivityService.create(context, intent, delay);
-        context.startService(service);
-        Process.killProcess(Process.myPid());
-    }
-
     public void block_200ms(View view) {
         block(200);
         showBlockTips();
@@ -145,8 +146,8 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
         if (Debug.isDebuggerConnected()) {
             return;
         }
-        String msg = "打开Logcat，设置过滤级别为：DEBUG，过滤字符串为：BlockUtils，" +
-                "可以看到BlockUtils检测到的卡顿代码位置。";
+        String msg = "打开Logcat，设置过滤级别为：DEBUG，过滤字符串为：ThreadMonitor，" +
+                "可以看到ThreadMonitor检测到的卡顿代码位置。";
         Log.w(TAG, msg);
         Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
     }
@@ -161,5 +162,9 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
 
     public void openShowMoreAnimationActivity(View view) {
         startActivity(new Intent(this, ShowMoreAnimationActivityActivity.class));
+    }
+
+    public void openFlipActivity(View view) {
+        startActivity(new Intent(this, FlipLayoutActivity.class));
     }
 }

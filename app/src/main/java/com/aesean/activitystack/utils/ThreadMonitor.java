@@ -21,7 +21,6 @@ import android.os.Debug;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import androidx.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Printer;
@@ -30,6 +29,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.regex.Pattern;
+
+import androidx.annotation.NonNull;
 
 /**
  * ThreadMonitor
@@ -71,19 +72,14 @@ public class ThreadMonitor {
     private final long mDumpStackDelayMillis;
     private final long mStartDumpStackDelayMillis;
     private final long mSyncDelay;
-
-    private boolean mRunning = false;
-
     private final boolean mPrintInDebuggerConnected;
     private final IPrinter mPrinter;
-
-    private Looper mTargetLooper;
-
     /**
      * 堆栈内容相同的情况下是否打印
      */
     private final boolean mPrintSameStack;
-
+    private boolean mRunning = false;
+    private LooperProxy mTargetLooperProxy;
     /**
      * 起一个子线程,用来打印主线程的堆栈信息.因为是要监控主线程是否有卡顿的,所以主线程现在是无法打印堆栈的,
      * 所以需要起一个子线程来打印主线程的堆栈信息.
@@ -94,6 +90,184 @@ public class ThreadMonitor {
     private long mReceiveDispatchingMessageTime;
 
     private String mFilter;
+    private Printer mMessagePrinter;
+
+    private ThreadMonitor(Builder builder) {
+        mTargetLooperProxy = builder.looperProxy;
+        mBlockDelayMillis = builder.blockDelayMillis;
+        mMaxPostTimes = builder.maxPostTimes;
+        mDumpStackDelayMillis = builder.dumpStackDelayMillis;
+        mStartDumpStackDelayMillis = builder.startDumpStackDelayMillis;
+        mSyncDelay = builder.syncDelay;
+        mPrintInDebuggerConnected = builder.printInDebuggerConnected;
+        mPrintSameStack = builder.printSameStack;
+        mPrinter = builder.printer;
+        mFilter = builder.filter;
+    }
+
+    private ThreadMonitor(LooperProxy looperProxy, long blockDelayMillis, int maxPostTimes
+            , long dumpStackDelayMillis, long startDumpStackDelayMillis, long syncDelay
+            , boolean printInDebuggerConnected, boolean printSameStack, IPrinter printer) {
+        mTargetLooperProxy = looperProxy;
+        mBlockDelayMillis = blockDelayMillis;
+        mMaxPostTimes = maxPostTimes;
+        mDumpStackDelayMillis = dumpStackDelayMillis;
+        mStartDumpStackDelayMillis = startDumpStackDelayMillis;
+        mSyncDelay = syncDelay;
+        mPrintInDebuggerConnected = printInDebuggerConnected;
+        mPrintSameStack = printSameStack;
+        mPrinter = printer;
+    }
+
+    /**
+     * dump堆栈数据，会添加时间标签
+     *
+     * @param dumpThread 需要处理的线程
+     * @return 堆栈数据
+     */
+    public static String dumpStackWithTimeHead(Thread dumpThread) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS", Locale.getDefault());
+        String head = "\n" + dateFormat.format(new Date(System.currentTimeMillis())) + "时堆栈状态\n";
+        String dumpStack = dumpStack(dumpThread);
+        return head + dumpStack;
+    }
+
+    /**
+     * dump堆栈数据
+     *
+     * @param dumpThread 需要处理的线程
+     * @return 堆栈数据
+     */
+    public static String dumpStack(Thread dumpThread) {
+        StackTraceElement[] stackTraceElements = dumpThread.getStackTrace();
+        // 注意这里仅仅是打印当前堆栈信息而已,实际代码不一定就是卡这里了.
+        // 比如此次Handler一共要处理三个方法
+        // method0(); 需要100ms
+        // method1(); 需要200ms
+        // method2(); 需要300ms
+        // 其实最佳方案是这三个方法全部打印,但从代码层面很难知道是这三个方法时候打印
+        // 只能每隔一段时间（比如：100ms）dump一次主线程堆栈信息,但是因为线程同步问题，可能第一个method0dump不到
+        String temp = "";
+        for (StackTraceElement stackTraceElement : stackTraceElements) {
+            String stack = stackTraceElement.toString() + "\n";
+            temp += stack;
+        }
+        if (TextUtils.isEmpty(temp)) {
+            temp = "null";
+        }
+        return temp;
+    }
+
+    public static ThreadMonitor getInstance() {
+        return InstanceHolder.sInstance;
+    }
+
+    private Printer createMessagePrinter() {
+        return new Printer() {
+            /**
+             * 纪录当前Printer回调的状态,注意这里初始状态必须是true.
+             */
+            private boolean mPrinterStart = true;
+
+            @Override
+            public void println(String s) {
+                if (!mPrintInDebuggerConnected && Debug.isDebuggerConnected()) {
+                    return;
+                }
+                // 默认不修正，如果实际出现错乱，可以调用下面方法进行修正。
+                // checkMessage(s);
+                // 这里因为Looper.loop方法内会在Handler开始和结束调用这个方法,所以这里也对应两个状态,start和finish
+                if (mPrinterStart) {
+                    receiveDispatchingMessage();
+                } else {
+                    receiveFinishedMessage();
+                }
+                mPrinterStart = !mPrinterStart;
+            }
+
+            /**
+             * 校验，这里默认收到消息是一次start，下一次finish，如果实际出现错乱，
+             * 可以根据{@link Looper#loop()}中logging.println打印的Message格式，进行一次修正。
+             */
+            private void checkMessage(String s) {
+                if (s.startsWith(">>>>> Dispatching to")) {
+                    mPrinterStart = true;
+                }
+                if (s.startsWith("<<<<< Finished to")) {
+                    mPrinterStart = false;
+                }
+            }
+
+        };
+    }
+
+    private void receiveDispatchingMessage() {
+        mReceiveDispatchingMessageTime = System.currentTimeMillis();
+        // 如果有出现没有正确收到finishMessage的情况，这里可以每次start强制再处理一次。
+        // if (mPrintStaceInfoRunnable != null) {
+        //     mPrintStaceInfoRunnable.cancel();
+        //     mWatchHandler.removeCallbacks(mPrintStaceInfoRunnable);
+        // }
+        // 注意当前类所有代码,除了这个方法里的代码,其他全部是在主线程执行.
+        mPrintStaceInfoRunnable = new PrintStaceInfoRunnable();
+        mWatchHandler.postDelayed(mPrintStaceInfoRunnable, mStartDumpStackDelayMillis);
+    }
+
+    private void receiveFinishedMessage() {
+        long end = System.currentTimeMillis();
+        long delay = end - mReceiveDispatchingMessageTime;
+        if (delay >= mBlockDelayMillis) {
+            String msg = "(" + mPrintStaceInfoRunnable.getTag() + ") 检测到超时，App执行本次Handler消息消耗了:" + delay + "ms\n";
+            if (mPrinter != null) {
+                if (!mPrinter.print(msg)) {
+                    Log.w(TAG, msg);
+                }
+            } else {
+                Log.w(TAG, msg);
+            }
+        }
+        // 这里是主线程，设置cancel后，没有做线程同步，子线程同步数据可能会有延迟。
+        mPrintStaceInfoRunnable.cancel();
+        mWatchHandler.removeCallbacks(mPrintStaceInfoRunnable);
+        mPrintStaceInfoRunnable = null;
+    }
+
+    public boolean isRunning() {
+        return mRunning;
+    }
+
+    public void install() {
+        if (mWatchThread != null || mWatchHandler != null) {
+            throw new RuntimeException("请勿重复install。如果需要释放资源，请调用release方法。");
+        }
+        mWatchThread = new HandlerThread(HANDLER_THREAD_TAG);
+        mWatchThread.start();
+        mWatchHandler = new Handler(mWatchThread.getLooper());
+        mMessagePrinter = createMessagePrinter();
+        mTargetLooperProxy.addMessageLogging(mMessagePrinter);
+        mRunning = true;
+    }
+
+    public void release() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
+            mWatchThread.quitSafely();
+        } else {
+            mWatchThread.quit();
+        }
+        mWatchThread = null;
+        mWatchHandler = null;
+        mTargetLooperProxy.removeMessageLogging(mMessagePrinter);
+        mTargetLooperProxy = null;
+        mRunning = false;
+    }
+
+    public LooperProxy getTargetLooperProxy() {
+        return mTargetLooperProxy;
+    }
+
+    public interface IPrinter {
+        boolean print(String msg);
+    }
 
     public static class Builder {
         private long blockDelayMillis = 400;
@@ -104,7 +278,7 @@ public class ThreadMonitor {
         private boolean printInDebuggerConnected = true;
         private boolean printSameStack = false;
         private IPrinter printer = null;
-        private Looper looper;
+        private LooperProxy looperProxy;
         private String filter;
 
         /**
@@ -180,11 +354,18 @@ public class ThreadMonitor {
 
         /**
          * 设置需要监控的线程
+         * {@link #setLooperProxy(LooperProxy)}
          *
          * @param looper 需要监控线程的Looper
          */
+        @Deprecated
         public Builder setLooper(Looper looper) {
-            this.looper = looper;
+            this.looperProxy = new LooperProxy(looper);
+            return this;
+        }
+
+        public Builder setLooperProxy(LooperProxy looperProxy) {
+            this.looperProxy = looperProxy;
             return this;
         }
 
@@ -199,179 +380,11 @@ public class ThreadMonitor {
          * @return ThreadMonitor
          */
         public ThreadMonitor builder() {
-            if (looper == null) {
-                throw new NullPointerException("Looper can't be null. Please setLooper()");
+            if (looperProxy == null) {
+                throw new NullPointerException("looperProxy can't be null. Please call setLooperProxy(). ");
             }
             return new ThreadMonitor(this);
         }
-    }
-
-    private ThreadMonitor(Builder builder) {
-        mTargetLooper = builder.looper;
-        mBlockDelayMillis = builder.blockDelayMillis;
-        mMaxPostTimes = builder.maxPostTimes;
-        mDumpStackDelayMillis = builder.dumpStackDelayMillis;
-        mStartDumpStackDelayMillis = builder.startDumpStackDelayMillis;
-        mSyncDelay = builder.syncDelay;
-        mPrintInDebuggerConnected = builder.printInDebuggerConnected;
-        mPrintSameStack = builder.printSameStack;
-        mPrinter = builder.printer;
-        mFilter = builder.filter;
-    }
-
-    private ThreadMonitor(Looper looper, long blockDelayMillis, int maxPostTimes
-            , long dumpStackDelayMillis, long startDumpStackDelayMillis, long syncDelay
-            , boolean printInDebuggerConnected, boolean printSameStack, IPrinter printer) {
-        mTargetLooper = looper;
-        mBlockDelayMillis = blockDelayMillis;
-        mMaxPostTimes = maxPostTimes;
-        mDumpStackDelayMillis = dumpStackDelayMillis;
-        mStartDumpStackDelayMillis = startDumpStackDelayMillis;
-        mSyncDelay = syncDelay;
-        mPrintInDebuggerConnected = printInDebuggerConnected;
-        mPrintSameStack = printSameStack;
-        mPrinter = printer;
-    }
-
-    private Printer createMessagePrinter() {
-        return new Printer() {
-            /**
-             * 纪录当前Printer回调的状态,注意这里初始状态必须是true.
-             */
-            private boolean mPrinterStart = true;
-
-            @Override
-            public void println(String s) {
-                if (!mPrintInDebuggerConnected && Debug.isDebuggerConnected()) {
-                    return;
-                }
-                // 默认不修正，如果实际出现错乱，可以调用下面方法进行修正。
-                // checkMessage(s);
-                // 这里因为Looper.loop方法内会在Handler开始和结束调用这个方法,所以这里也对应两个状态,start和finish
-                if (mPrinterStart) {
-                    receiveDispatchingMessage();
-                } else {
-                    receiveFinishedMessage();
-                }
-                mPrinterStart = !mPrinterStart;
-            }
-
-            /**
-             * 校验，这里默认收到消息是一次start，下一次finish，如果实际出现错乱，
-             * 可以根据{@link Looper#loop()}中logging.println打印的Message格式，进行一次修正。
-             */
-            private void checkMessage(String s) {
-                if (s.startsWith(">>>>> Dispatching to")) {
-                    mPrinterStart = true;
-                }
-                if (s.startsWith("<<<<< Finished to")) {
-                    mPrinterStart = false;
-                }
-            }
-
-        };
-    }
-
-    /**
-     * dump堆栈数据，会添加时间标签
-     *
-     * @param dumpThread 需要处理的线程
-     * @return 堆栈数据
-     */
-    public static String dumpStackWithTimeHead(Thread dumpThread) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS", Locale.getDefault());
-        String head = "\n" + dateFormat.format(new Date(System.currentTimeMillis())) + "时堆栈状态\n";
-        String dumpStack = dumpStack(dumpThread);
-        return head + dumpStack;
-    }
-
-    /**
-     * dump堆栈数据
-     *
-     * @param dumpThread 需要处理的线程
-     * @return 堆栈数据
-     */
-    public static String dumpStack(Thread dumpThread) {
-        StackTraceElement[] stackTraceElements = dumpThread.getStackTrace();
-        // 注意这里仅仅是打印当前堆栈信息而已,实际代码不一定就是卡这里了.
-        // 比如此次Handler一共要处理三个方法
-        // method0(); 需要100ms
-        // method1(); 需要200ms
-        // method2(); 需要300ms
-        // 其实最佳方案是这三个方法全部打印,但从代码层面很难知道是这三个方法时候打印
-        // 只能每隔一段时间（比如：100ms）dump一次主线程堆栈信息,但是因为线程同步问题，可能第一个method0dump不到
-        String temp = "";
-        for (StackTraceElement stackTraceElement : stackTraceElements) {
-            String stack = stackTraceElement.toString() + "\n";
-            temp += stack;
-        }
-        if (TextUtils.isEmpty(temp)) {
-            temp = "null";
-        }
-        return temp;
-    }
-
-    private void receiveDispatchingMessage() {
-        mReceiveDispatchingMessageTime = System.currentTimeMillis();
-        // 如果有出现没有正确收到finishMessage的情况，这里可以每次start强制再处理一次。
-        // if (mPrintStaceInfoRunnable != null) {
-        //     mPrintStaceInfoRunnable.cancel();
-        //     mWatchHandler.removeCallbacks(mPrintStaceInfoRunnable);
-        // }
-        // 注意当前类所有代码,除了这个方法里的代码,其他全部是在主线程执行.
-        mPrintStaceInfoRunnable = new PrintStaceInfoRunnable();
-        mWatchHandler.postDelayed(mPrintStaceInfoRunnable, mStartDumpStackDelayMillis);
-    }
-
-    private void receiveFinishedMessage() {
-        long end = System.currentTimeMillis();
-        long delay = end - mReceiveDispatchingMessageTime;
-        if (delay >= mBlockDelayMillis) {
-            String msg = "(" + mPrintStaceInfoRunnable.getTag() + ") 检测到超时，App执行本次Handler消息消耗了:" + delay + "ms\n";
-            if (mPrinter != null) {
-                if (!mPrinter.print(msg)) {
-                    Log.w(TAG, msg);
-                }
-            } else {
-                Log.w(TAG, msg);
-            }
-        }
-        // 这里是主线程，设置cancel后，没有做线程同步，子线程同步数据可能会有延迟。
-        mPrintStaceInfoRunnable.cancel();
-        mWatchHandler.removeCallbacks(mPrintStaceInfoRunnable);
-        mPrintStaceInfoRunnable = null;
-    }
-
-    public boolean isRunning() {
-        return mRunning;
-    }
-
-    public void install() {
-        if (mWatchThread != null || mWatchHandler != null) {
-            throw new RuntimeException("请勿重复install。如果需要释放资源，请调用release方法。");
-        }
-        mWatchThread = new HandlerThread(HANDLER_THREAD_TAG);
-        mWatchThread.start();
-        mWatchHandler = new Handler(mWatchThread.getLooper());
-        mTargetLooper.setMessageLogging(createMessagePrinter());
-        mRunning = true;
-    }
-
-    public void release() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            mWatchThread.quitSafely();
-        } else {
-            mWatchThread.quit();
-        }
-        mWatchThread = null;
-        mWatchHandler = null;
-        mTargetLooper.setMessageLogging(null);
-        mTargetLooper = null;
-        mRunning = false;
-    }
-
-    public static ThreadMonitor getInstance() {
-        return InstanceHolder.sInstance;
     }
 
     private static class InstanceHolder {
@@ -388,7 +401,7 @@ public class ThreadMonitor {
         private boolean mCancel = false;
         private StringBuilder mStackInfo = new StringBuilder();
 
-        private Thread mDumpThread = mTargetLooper.getThread();
+        private Thread mDumpThread = mTargetLooperProxy.getThread();
 
         private boolean isTimeOut() {
             return System.currentTimeMillis() - mStartMillis > mBlockDelayMillis + mSyncDelay;
@@ -513,9 +526,5 @@ public class ThreadMonitor {
                 }
             }
         }
-    }
-
-    public interface IPrinter {
-        boolean print(String msg);
     }
 }

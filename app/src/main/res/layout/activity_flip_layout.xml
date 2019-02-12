@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical"
+    tools:context=".FlipLayoutActivity">
+
+    <FrameLayout
+        android:layout_width="400dp"
+        android:layout_height="400dp">
+
+        <com.aesean.activitystack.view.flip.FlipLayout
+            android:id="@+id/flipLayout"
+            android:layout_width="400dp"
+            android:layout_height="400dp"
+            android:layout_gravity="center"
+            android:background="@color/md_amber_200"
+            android:clipChildren="false">
+
+            <TextView
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:layout_gravity="center"
+                android:background="@color/md_cyan_500"
+                android:gravity="center"
+                android:text="1、123456"
+                android:textColor="@color/md_white_1000" />
+
+            <TextView
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:layout_gravity="center"
+                android:background="@color/md_red_500"
+                android:gravity="center"
+                android:text="2、ABCDEF"
+                android:textColor="@color/md_white_1000" />
+
+            <TextView
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:layout_gravity="center"
+                android:background="@color/md_green_500"
+                android:gravity="center"
+                android:text="3、GHIJKLMN"
+                android:textColor="@color/md_white_1000" />
+
+            <TextView
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:layout_gravity="center"
+                android:background="@color/md_pink_500"
+                android:gravity="center"
+                android:text="4、OPQRST"
+                android:textColor="@color/md_white_1000" />
+
+        </com.aesean.activitystack.view.flip.FlipLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:layout_marginTop="100dp"
+            android:background="@color/md_white_1000" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:layout_gravity="bottom"
+            android:layout_marginBottom="100dp"
+            android:background="@color/md_white_1000" />
+
+        <View
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="100dp"
+            android:layout_marginLeft="100dp"
+            android:background="@color/md_white_1000" />
+
+        <View
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="end"
+            android:layout_marginEnd="100dp"
+            android:layout_marginRight="100dp"
+            android:background="@color/md_white_1000" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/flip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="flip" />
+
+        <Button
+            android:id="@+id/pause"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="pause" />
+
+        <Button
+            android:id="@+id/resume"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="resume" />
+
+    </LinearLayout>
+</LinearLayout>
