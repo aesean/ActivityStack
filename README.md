@@ -1,10 +1,8 @@
 # ActivityStack    
 这个项目有什么用呢？其实没什么用，但其实也很有用。主要是一些跟具体项目无关的工具类。
 
-## [FlipLayout]
-添加了一个带有3D翻转效果的View。FlipLayout继承自FrameLayout，通过调用FlipLayout的flip方法可以让子View按index顺序，一个个翻转，效果如下图。
-(https://github.com/aesean/ActivityStack/blob/master/app/src/main/java/com/aesean/activitystack/view/flip/FlipLayout.java)
-
+## [FlipLayout](https://github.com/aesean/ActivityStack/blob/master/app/src/main/java/com/aesean/activitystack/view/flip/FlipLayout.java)
+添加了一个带有3D翻转效果的View。FlipLayout继承自FrameLayout，通过调用FlipLayout的flip方法可以让子View按index顺序，一个个翻转，效果如下图。这个效果跟之前的Rotate3D稍有区别，Rotate3D是来自Google的实现，其中的Animator实现也是仿的Google的效果。Flip的效果会更好一些。
 ![FlipLayout](https://github.com/aesean/ActivityStack/blob/master/flip_layout.gif)
 
 ## [ShowMoreAniamtion](https://github.com/aesean/ActivityStack/blob/master/app/src/main/java/com/aesean/activitystack/utils/TextViewUtils.java)
