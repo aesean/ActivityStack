@@ -23,6 +23,7 @@ import android.widget.Toast;
 
 import com.aesean.activitystack.utils.ApplicationUtils;
 import com.aesean.activitystack.utils.shake.IRegisterShakeDetector;
+import com.aesean.activitystack.view.flip.FlipLayout;
 
 import java.util.Map;
 

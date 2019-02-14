@@ -16,7 +16,6 @@ class FlipLayoutActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_flip_layout)
-        flipLayout
         val view = flipLayout
         view.flipInDuration = 3000
         view.flipOutDuration = 3000
@@ -65,18 +64,18 @@ class FlipLayoutActivity : AppCompatActivity() {
         flip.setOnClickListener {
             view.flip()
         }
+        flipReverse.setOnClickListener {
+            view.flipReverse()
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             resume.setOnClickListener {
                 view.resume()
             }
-        } else {
-            resume.visibility = View.INVISIBLE
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             pause.setOnClickListener {
                 view.pause()
             }
         } else {
+            resume.visibility = View.INVISIBLE
             pause.visibility = View.INVISIBLE
         }
     }

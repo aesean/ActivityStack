@@ -95,19 +95,25 @@
             android:id="@+id/flip"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="flip" />
+            android:text="Flip" />
+
+        <Button
+            android:id="@+id/flipReverse"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="FlipReverse" />
 
         <Button
             android:id="@+id/pause"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="pause" />
+            android:text="Pause" />
 
         <Button
             android:id="@+id/resume"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="resume" />
+            android:text="Resume" />
 
     </LinearLayout>
 </LinearLayout>

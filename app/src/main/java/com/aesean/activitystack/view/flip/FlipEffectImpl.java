@@ -10,6 +10,7 @@ public class FlipEffectImpl implements FlipEffect {
     public void onUpdate(float degrees, @NonNull View view) {
         final int width = view.getWidth();
         final int height = view.getHeight();
+        degrees = (degrees % 360f + 360f) % 360f;
         if (degrees >= 0 && degrees < 180) {
             final float progress = degrees / 180f;
             view.setPivotX(0);

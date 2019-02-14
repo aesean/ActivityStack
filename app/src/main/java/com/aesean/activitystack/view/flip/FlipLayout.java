@@ -16,8 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
 public class FlipLayout extends FrameLayout {
-
-    private static final long DEFAULT_DURATION = 600;
+    private static final long DEFAULT_DURATION = 300;
 
     private int mCurrentShowViewIndex = -1;
     @NonNull
@@ -30,15 +29,22 @@ public class FlipLayout extends FrameLayout {
     private ValueAnimator mFlipInAnimator;
     @Nullable
     private FlipListener mFlipListener;
+    private int mShouldFlipInIndex = -1;
+    private boolean mFlipReverse = true;
 
     {
-        mFlipOutAnimator = ValueAnimator.ofFloat(0, 90);
+        mFlipOutAnimator = ValueAnimator.ofFloat(0, 1);
         mFlipOutAnimator.setDuration(DEFAULT_DURATION);
         mFlipOutAnimator.setInterpolator(new LinearInterpolator());
         mFlipOutAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                float value = (float) animation.getAnimatedValue();
+                final float value;
+                if (mFlipReverse) {
+                    value = (float) animation.getAnimatedValue() * -90;
+                } else {
+                    value = (float) animation.getAnimatedValue() * 90;
+                }
                 mFlipEffect.onUpdate(value, getChildAt(mCurrentShowViewIndex));
                 if (mFlipListener != null) {
                     mFlipListener.onFlipping(mCurrentShowViewIndex, value);
@@ -49,10 +55,16 @@ public class FlipLayout extends FrameLayout {
             @Override
             public void onAnimationStart(Animator animation) {
                 super.onAnimationStart(animation);
+                final int degrees;
+                if (mFlipReverse) {
+                    degrees = 90;
+                } else {
+                    degrees = 270;
+                }
                 for (int i = 0; i < getChildCount(); i++) {
                     if (i != mCurrentShowViewIndex) {
                         View view = getChildAt(i);
-                        mFlipEffect.onUpdate(270, view);
+                        mFlipEffect.onUpdate(degrees, view);
                     }
                 }
                 if (mFlipListener != null) {
@@ -66,17 +78,22 @@ public class FlipLayout extends FrameLayout {
                 if (mFlipListener != null) {
                     mFlipListener.onFlipOutEnd(mCurrentShowViewIndex);
                 }
-                mCurrentShowViewIndex = nextFlipIndex();
+                mCurrentShowViewIndex = mShouldFlipInIndex;
             }
         });
 
-        mFlipInAnimator = ValueAnimator.ofFloat(270, 360);
+        mFlipInAnimator = ValueAnimator.ofFloat(0, 1);
         mFlipInAnimator.setDuration(DEFAULT_DURATION);
         mFlipInAnimator.setInterpolator(new LinearInterpolator());
         mFlipInAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                float value = (float) animation.getAnimatedValue();
+                final float value;
+                if (mFlipReverse) {
+                    value = (1 - (float) animation.getAnimatedValue()) * 90;
+                } else {
+                    value = (float) animation.getAnimatedValue() * 90 + 270;
+                }
                 mFlipEffect.onUpdate(value, getChildAt(mCurrentShowViewIndex));
                 if (mFlipListener != null) {
                     mFlipListener.onFlipping(mCurrentShowViewIndex, value);
@@ -112,7 +129,7 @@ public class FlipLayout extends FrameLayout {
             public void onAnimationStart(Animator animation) {
                 super.onAnimationStart(animation);
                 from = mCurrentShowViewIndex;
-                to = nextFlipIndex();
+                to = mShouldFlipInIndex;
                 if (mFlipListener != null) {
                     mFlipListener.onFlipStart(from, to);
                 }
@@ -143,10 +160,6 @@ public class FlipLayout extends FrameLayout {
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     public FlipLayout(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
-    }
-
-    private int nextFlipIndex() {
-        return (mCurrentShowViewIndex + 1) % getChildCount();
     }
 
     public FlipEffect getFlipEffect() {
@@ -200,10 +213,47 @@ public class FlipLayout extends FrameLayout {
     }
 
     public void flip() {
+        flip(false);
+    }
+
+    public void flipReverse() {
+        flip(true);
+    }
+
+    public void flip(boolean flipReverse) {
+        final int index;
+        final int childCount = getChildCount();
+        if (flipReverse) {
+            index = ((mCurrentShowViewIndex - 1) % childCount + childCount) % childCount;
+        } else {
+            index = ((mCurrentShowViewIndex + 1) % childCount + childCount) % childCount;
+        }
+
+        flip(index, flipReverse);
+    }
+
+    public void flipReverse(int index) {
+        flip(index, true);
+    }
+
+    public void flip(int index) {
+        flip(index, false);
+    }
+
+    public void flip(int index, boolean flipReverse) {
         if (mAnimatorSet.isRunning()) {
             return;
         }
         checkChildViewCount();
+        final int childCount = getChildCount();
+        if (index >= childCount || index < 0) {
+            throw new IllegalArgumentException("index should be < childCount and >= 0, index = " + index + ", childCount = " + childCount);
+        }
+        if (index == mCurrentShowViewIndex) {
+            return;
+        }
+        mFlipReverse = flipReverse;
+        mShouldFlipInIndex = index;
         if (mCurrentShowViewIndex == -1) {
             mCurrentShowViewIndex = getChildCount() - 1;
         }
