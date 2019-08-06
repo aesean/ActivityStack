@@ -4,6 +4,8 @@ package com.aesean.activitystack.demo.textview
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.TextUtils
+import android.text.method.LinkMovementMethod
+import android.text.style.ClickableSpan
 import android.text.style.ForegroundColorSpan
 import android.util.Log
 import android.view.View
@@ -31,8 +33,8 @@ private fun log(any: Any?) {
  * TextViewBuilder
  * ellipsize textView with custom suffix.
  */
-class TextViewSuffixWrapper constructor(val textView: TextView) {
-    private data class SuffixColor(val fromIndex: Int, val toIndex: Int, @ColorRes val color: Int)
+class TextViewSuffixWrapper(val textView: TextView) {
+    private data class SuffixColor(val fromIndex: Int, val toIndex: Int, val color: Int?, val listener: View.OnClickListener? = null)
 
     var mainContent: CharSequence = textView.text
         set(value) {
@@ -49,21 +51,23 @@ class TextViewSuffixWrapper constructor(val textView: TextView) {
     var targetLineCount: Int = 2
     var transition: Transition? = AutoTransition()
 
-    init {
-        if (textView.layoutParams.width == ViewGroup.LayoutParams.WRAP_CONTENT) {
-            throw RuntimeException("textView's width can't be wrap_content. Only support match_parent or specified size")
-        }
-    }
-
     private val textWrapper: (text: String, suffix: CharSequence, suffixIndex: Int) -> CharSequence =
             { text, suffix, suffixIndex ->
                 SpannableStringBuilder(text).apply {
                     suffixColorList.forEach {
-                        val color = ResourcesCompat.getColor(textView.resources, it.color, textView.context.theme)
-                        setSpan(
-                                ForegroundColorSpan(color), suffixIndex + it.fromIndex, suffixIndex + it.toIndex,
-                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                        )
+                        val start = suffixIndex + it.fromIndex
+                        val end = suffixIndex + it.toIndex
+                        it.listener?.also { listener ->
+                            setSpan(object : ClickableSpan() {
+                                override fun onClick(widget: View) {
+                                    listener.onClick(widget)
+                                }
+                            }, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                            textView.movementMethod = LinkMovementMethod.getInstance()
+                        }
+                        it.color?.also { color ->
+                            setSpan(ForegroundColorSpan(color), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                        }
                     }
                 }
             }
@@ -72,8 +76,24 @@ class TextViewSuffixWrapper constructor(val textView: TextView) {
         mutableListOf<SuffixColor>()
     }
 
-    fun suffixColor(fromIndex: Int, toIndex: Int, @ColorRes color: Int) {
-        suffixColorList.add(SuffixColor(fromIndex, toIndex, color))
+    init {
+        if (textView.layoutParams.width == ViewGroup.LayoutParams.WRAP_CONTENT) {
+            throw RuntimeException("textView's width can't be wrap_content. Only support match_parent or specified size")
+        }
+    }
+
+    fun suffixColor(fromIndex: Int, toIndex: Int, @ColorRes colorRes: Int) {
+        val color = ResourcesCompat.getColor(textView.resources, colorRes, textView.context.theme)
+        suffixColorList.add(SuffixColor(fromIndex, toIndex, color, null))
+    }
+
+    fun suffixColor(fromIndex: Int, toIndex: Int, listener: View.OnClickListener) {
+        suffixColorList.add(SuffixColor(fromIndex, toIndex, null, listener))
+    }
+
+    fun suffixColor(fromIndex: Int, toIndex: Int, @ColorRes colorRes: Int, listener: View.OnClickListener) {
+        val color = ResourcesCompat.getColor(textView.resources, colorRes, textView.context.theme)
+        suffixColorList.add(SuffixColor(fromIndex, toIndex, color, listener))
     }
 
     @JvmOverloads
@@ -85,6 +105,15 @@ class TextViewSuffixWrapper constructor(val textView: TextView) {
                     null
                 }
         )
+    }
+
+    @JvmOverloads
+    fun toggle(animation: Boolean = true) {
+        if (isCollapsed) {
+            expand(animation)
+        } else {
+            collapse(animation)
+        }
     }
 
     @JvmOverloads

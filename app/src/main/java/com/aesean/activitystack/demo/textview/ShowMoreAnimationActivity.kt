@@ -17,6 +17,7 @@
 package com.aesean.activitystack.demo.textview
 
 import android.os.Bundle
+import android.view.View
 import android.view.ViewGroup
 import com.aesean.activitystack.R
 import com.aesean.activitystack.base.BaseActivity
@@ -27,22 +28,27 @@ class ShowMoreAnimationActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_show_more_animation)
-        TextViewSuffixWrapper(textView).apply {
+        val textViewSuffixWrapper = TextViewSuffixWrapper(textView).apply wrapper@{
             this.mainContent = getString(R.string.sample_text)
             this.suffix = "...查看更多"
             this.suffix?.apply {
-                suffixColor("...".length, this.length, R.color.md_blue_500)
+                suffixColor("...".length, this.length, R.color.md_blue_500, listener = View.OnClickListener { view ->
+                    toast("click ${this}")
+                    if (this@wrapper.isCollapsed) {
+                        this@wrapper.expand()
+                    }
+                })
             }
             this.transition?.duration = 5000
             sceneRoot = this.textView.parent.parent.parent as ViewGroup
             collapse(false)
             this.textView.setOnClickListener {
-                if (this.isCollapsed) {
-                    expand()
-                } else {
-                    collapse()
-                }
+                toast("click view")
             }
+        }
+
+        toggleButton.setOnClickListener {
+            textViewSuffixWrapper.toggle()
         }
     }
 
