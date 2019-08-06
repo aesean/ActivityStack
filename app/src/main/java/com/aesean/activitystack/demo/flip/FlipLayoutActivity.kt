@@ -1,10 +1,11 @@
-package com.aesean.activitystack
+package com.aesean.activitystack.demo.flip
 
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import com.aesean.activitystack.R
 import com.aesean.activitystack.view.flip.FlipLayout
 import kotlinx.android.synthetic.main.activity_flip_layout.*
 

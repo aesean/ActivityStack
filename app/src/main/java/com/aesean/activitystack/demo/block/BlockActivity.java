@@ -14,7 +14,7 @@
  *    limitations under the License.
  */
 
-package com.aesean.activitystack;
+package com.aesean.activitystack.demo.block;
 
 import android.app.Activity;
 import android.content.Context;
@@ -28,15 +28,21 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.aesean.activitystack.AppApplication;
+import com.aesean.activitystack.BuildConfig;
+import com.aesean.activitystack.R;
+import com.aesean.activitystack.demo.flip.FlipLayoutActivity;
+import com.aesean.activitystack.demo.textview.ShowMoreAnimationActivityActivity;
+import com.aesean.activitystack.service.LaunchActivityService;
 import com.aesean.activitystack.utils.ApplicationUtils;
 import com.aesean.activitystack.utils.shake.IRegisterShakeDetector;
 
 import java.util.Map;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-public class MainActivity extends AppCompatActivity implements IRegisterShakeDetector {
-    private static final String TAG = "MainActivity";
+public class BlockActivity extends AppCompatActivity implements IRegisterShakeDetector {
+    private static final String TAG = "BlockActivity";
 
     private static void restartApplicationByService(Context context, long delay) {
         Intent intent = context.getPackageManager()
@@ -50,7 +56,7 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_block);
     }
 
     @Override
@@ -64,7 +70,6 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
             return;
         }
         // release的时候，后面的代码会被自动删除
-        map.put("打开SecondActivity", SecondActivity.class);
         map.put("自动填充姓名", new Runnable() {
             @Override
             public void run() {
@@ -75,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
         map.put("自动登录", new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(MainActivity.this, "模拟自动登录，可以安全放心的把账号密码写到这里，" +
+                Toast.makeText(BlockActivity.this, "模拟自动登录，可以安全放心的把账号密码写到这里，" +
                         "发布release的时候，这里的代码会被自动删除。", Toast.LENGTH_LONG).show();
             }
         });
@@ -88,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
         map.put("重启App（Service）", new Runnable() {
             @Override
             public void run() {
-                restartApplicationByService(MainActivity.this, 500);
+                restartApplicationByService(BlockActivity.this, 500);
             }
         });
         map.put("TopActivity", new Runnable() {
@@ -99,7 +104,7 @@ public class MainActivity extends AppCompatActivity implements IRegisterShakeDet
                 if (topActivity != null) {
                     msg = topActivity.getClass().getName();
                 }
-                Toast.makeText(MainActivity.this, "TopActivity is " + msg, Toast.LENGTH_LONG).show();
+                Toast.makeText(BlockActivity.this, "TopActivity is " + msg, Toast.LENGTH_LONG).show();
             }
         });
     }

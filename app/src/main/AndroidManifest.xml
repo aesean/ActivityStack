@@ -21,22 +21,22 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".SecondActivity"
+            android:name=".demo.block.BlockActivity"
             android:label="SecondActivity"
             android:parentActivityName=".MainActivity" />
-
-        <service
-            android:name=".LaunchActivityService"
-            android:process=":launch_activity_service" />
-
         <activity
-            android:name=".ShowMoreAnimationActivityActivity"
+            android:name=".demo.textview.ShowMoreAnimationActivityActivity"
             android:label="ShowMoreAnimationActivityActivity"
             android:parentActivityName=".MainActivity" />
         <activity
-            android:name=".FlipLayoutActivity"
+            android:name=".demo.flip.FlipLayoutActivity"
             android:label="FlipLayoutActivity"
             android:parentActivityName=".MainActivity" />
+
+        <service
+            android:name=".service.LaunchActivityService"
+            android:process=":launch_activity_service" />
+
     </application>
 
 </manifest>

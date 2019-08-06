@@ -14,12 +14,13 @@
  *    limitations under the License.
  */
 
-package com.aesean.activitystack;
+package com.aesean.activitystack.service;
 
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+
 import androidx.annotation.Nullable;
 
 /**

@@ -14,13 +14,14 @@
  *    limitations under the License.
  */
 
-package com.aesean.activitystack
+package com.aesean.activitystack.demo.textview
 
 import android.animation.ValueAnimator
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.aesean.activitystack.R
 import com.aesean.activitystack.extensions.setMaxLinesWithAnimation
 
 class ShowMoreAnimationActivityActivity : AppCompatActivity() {
