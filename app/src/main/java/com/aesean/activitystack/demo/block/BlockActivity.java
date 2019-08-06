@@ -33,8 +33,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.aesean.activitystack.AppApplication;
 import com.aesean.activitystack.BuildConfig;
 import com.aesean.activitystack.R;
-import com.aesean.activitystack.demo.flip.FlipLayoutActivity;
-import com.aesean.activitystack.demo.textview.ShowMoreAnimationActivityActivity;
 import com.aesean.activitystack.service.LaunchActivityService;
 import com.aesean.activitystack.utils.ApplicationUtils;
 import com.aesean.activitystack.utils.shake.IRegisterShakeDetector;
@@ -163,13 +161,5 @@ public class BlockActivity extends AppCompatActivity implements IRegisterShakeDe
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    public void openShowMoreAnimationActivity(View view) {
-        startActivity(new Intent(this, ShowMoreAnimationActivityActivity.class));
-    }
-
-    public void openFlipActivity(View view) {
-        startActivity(new Intent(this, FlipLayoutActivity.class));
     }
 }

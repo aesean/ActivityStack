@@ -25,7 +25,7 @@
             android:label="SecondActivity"
             android:parentActivityName=".MainActivity" />
         <activity
-            android:name=".demo.textview.ShowMoreAnimationActivityActivity"
+            android:name=".demo.textview.ShowMoreAnimationActivity"
             android:label="ShowMoreAnimationActivityActivity"
             android:parentActivityName=".MainActivity" />
         <activity

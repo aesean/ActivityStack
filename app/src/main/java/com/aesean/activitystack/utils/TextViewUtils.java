@@ -22,9 +22,6 @@ import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.graphics.RectF;
 import android.os.Build;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.RequiresApi;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextDirectionHeuristic;
@@ -32,6 +29,10 @@ import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
 import android.util.Log;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -41,11 +42,12 @@ import java.util.Hashtable;
 /**
  * TextViewUtils.
  * {@link androidx.appcompat.widget.AppCompatTextViewAutoSizeHelper}
- *
+ * use {@link com.aesean.activitystack.demo.textview.TextViewExtensionsKt}
  * @author danny
  * @version 1.0
  * @since 1/17/18
  */
+@Deprecated
 @RequiresApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
 public class TextViewUtils {
     private static final String TAG = "TextViewUtils";

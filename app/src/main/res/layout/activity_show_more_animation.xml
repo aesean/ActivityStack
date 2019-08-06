@@ -22,7 +22,7 @@
     android:gravity="center"
     android:orientation="vertical"
     android:padding="16dp"
-    tools:context="com.aesean.activitystack.demo.textview.ShowMoreAnimationActivityActivity">
+    tools:context="com.aesean.activitystack.demo.textview.ShowMoreAnimationActivity">
 
     <TextView
         android:layout_width="match_parent"
@@ -46,14 +46,12 @@
             android:padding="16dp">
 
             <TextView
-                android:id="@+id/target_text_view"
-                android:layout_width="wrap_content"
+                android:id="@+id/textView"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_toLeftOf="@+id/button"
                 android:layout_toStartOf="@+id/button"
                 android:background="#ccc"
-                android:ellipsize="end"
-                android:maxLines="3"
                 android:text="@string/sample_text" />
 
             <TextView
@@ -74,8 +72,8 @@
     </androidx.cardview.widget.CardView>
 
     <Button
+        android:id="@+id/toggleButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:onClick="toggle"
         android:text="@string/toggle" />
 </LinearLayout>
