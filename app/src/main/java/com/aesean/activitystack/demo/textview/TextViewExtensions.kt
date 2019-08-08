@@ -42,6 +42,10 @@ class TextViewSuffixWrapper(val textView: TextView) {
             field = value
         }
     var suffix: CharSequence? = null
+        set(value) {
+            collapseCache = null
+            field = value
+        }
 
     private var collapseCache: CharSequence? = null
 
@@ -50,6 +54,7 @@ class TextViewSuffixWrapper(val textView: TextView) {
 
     var targetLineCount: Int = 2
     var transition: Transition? = AutoTransition()
+    var sceneRoot: ViewGroup = textView.parent as ViewGroup
 
     private val textWrapper: (text: String, suffix: CharSequence, suffixIndex: Int) -> CharSequence =
             { text, suffix, suffixIndex ->
@@ -126,8 +131,6 @@ class TextViewSuffixWrapper(val textView: TextView) {
                 }
         )
     }
-
-    var sceneRoot: ViewGroup = textView.parent as ViewGroup
 
     private fun performExpand(transition: Transition?) {
         isCollapsed = false
@@ -389,12 +392,12 @@ private fun TextView.binarySearch(
             log("verify: $end cached")
             return hit
         }
-        log("verify: $end")
         verifyCount++
         val tmp = mainContent.substring(start, end)
         val context = "$tmp$suffix"
         text = textWrapper?.invoke(context, suffix, end) ?: context
         val lineCount = this.lineCount
+        log("verify: $end, lineCount = $lineCount")
         verifyCache[key] = lineCount
         return lineCount
     }
@@ -409,8 +412,9 @@ private fun TextView.binarySearch(
         return mainContent.length
     }
 
-    var left = 0
-    var right = mainContent.length
+    var left = this.layout.getLineEnd(targetLineCount - 2)
+    var right = this.layout.getLineEnd(targetLineCount - 1)
+    log("left = $left, right = $right")
     while (left <= right) {
         val mid = (left + right) / 2
 
@@ -441,4 +445,3 @@ private fun TextView.binarySearch(
     log("failed, verifyCount = $verifyCount")
     return -1
 }
-

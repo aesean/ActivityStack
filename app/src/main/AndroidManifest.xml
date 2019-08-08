@@ -26,7 +26,7 @@
             android:parentActivityName=".MainActivity" />
         <activity
             android:name=".demo.textview.ShowMoreAnimationActivity"
-            android:label="ShowMoreAnimationActivityActivity"
+            android:label="ShowMoreAnimationActivity"
             android:parentActivityName=".MainActivity" />
         <activity
             android:name=".demo.flip.FlipLayoutActivity"

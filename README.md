@@ -7,6 +7,7 @@
 
 ## [ShowMoreAniamtion](https://github.com/aesean/ActivityStack/blob/master/app/src/main/java/com/aesean/activitystack/demo/textview/TextViewExtensions.kt)
 更新了实现方式，现在的动画部分通过TransitionManager实现，可以在动画过程中只layout一次，性能提升明显。另外现在支持在末尾添加类似"...查看更多"的后缀，主要通过二分查找实现。设置TextViewExtensions的enableDebugLog为true，然后在logcat中过滤关键字"TextViewLayout"可以看到后缀的查找过程。
+[原理介绍](https://juejin.im/post/5d4a5fb66fb9a06b0517d7eb)
 ![ShowMoreAniamtion](https://github.com/aesean/ActivityStack/blob/master/show_more_animation.gif)
 
 ## [Evaluate](https://github.com/aesean/ActivityStack/blob/master/Evaluate)
