@@ -1,6 +1,7 @@
 package com.aesean.activitystack.demo.textview
 
 
+import android.text.Layout
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.TextUtils
@@ -48,9 +49,13 @@ class TextViewSuffixWrapper(val textView: TextView) {
         }
 
     private var collapseCache: CharSequence? = null
+    private var collapseLayoutCache: Layout? = null
 
     var isCollapsed: Boolean = false
         private set
+
+    var enableCache = false
+    var enableMaxLinesCheck = true
 
     var targetLineCount: Int = 2
     var transition: Transition? = AutoTransition()
@@ -138,6 +143,9 @@ class TextViewSuffixWrapper(val textView: TextView) {
     }
 
     private fun performCollapse(transition: Transition?) {
+        require(!(enableMaxLinesCheck && textView.maxLines < targetLineCount)) {
+            "textView.maxLines(${textView.maxLines}) < targetLineCount($targetLineCount)"
+        }
         isCollapsed = true
         fun defaultCollapse() {
             textView.maxLines = targetLineCount
@@ -177,7 +185,7 @@ class TextViewSuffixWrapper(val textView: TextView) {
         if (suffix == null) {
             defaultCollapse()
         } else {
-            if (collapseCache != null) {
+            if (enableCache && collapseCache != null && collapseLayoutCache == textView.layout) {
                 if (collapseCache == mainContent) {
                     return
                 }
@@ -195,7 +203,10 @@ class TextViewSuffixWrapper(val textView: TextView) {
                         targetLineCount = targetLineCount,
                         transition = transition,
                         sceneRoot = sceneRoot,
-                        onSuccess = { text -> collapseCache = text },
+                        onSuccess = { text ->
+                            collapseCache = text
+                            collapseLayoutCache = textView.layout
+                        },
                         onFailed = {
                             defaultCollapse()
                         },
@@ -412,8 +423,13 @@ private fun TextView.binarySearch(
         return mainContent.length
     }
 
-    var left = this.layout.getLineEnd(targetLineCount - 2)
-    var right = this.layout.getLineEnd(targetLineCount - 1)
+    // Remove optimization. Some special characters will cause bug.
+    // var left = this.layout.getLineEnd(targetLineCount - 2)
+    // var right = this.layout.getLineEnd(targetLineCount - 1)
+
+    var left = 0
+    var right = mainContent.length
+
     log("left = $left, right = $right")
     while (left <= right) {
         val mid = (left + right) / 2
