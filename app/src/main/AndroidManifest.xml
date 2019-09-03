@@ -32,11 +32,17 @@
             android:name=".demo.flip.FlipLayoutActivity"
             android:label="FlipLayoutActivity"
             android:parentActivityName=".MainActivity" />
-
+        <activity
+            android:name=".demo.recyclerview.ListAdapterActivity"
+            android:label="ListAdapterActivity"
+            android:parentActivityName=".MainActivity" />
+        <activity
+            android:name=".demo.recyclerview.MultiTypeListAdapterActivity"
+            android:label="MultiTypeListAdapterActivity"
+            android:parentActivityName=".MainActivity" />
         <service
             android:name=".service.LaunchActivityService"
             android:process=":launch_activity_service" />
-
     </application>
 
 </manifest>
