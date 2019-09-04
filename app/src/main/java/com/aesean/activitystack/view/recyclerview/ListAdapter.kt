@@ -20,6 +20,7 @@ class ListAdapter @JvmOverloads constructor(diffCallback: DiffUtil.ItemCallback<
     private var list: List<Any> = emptyList()
 
     fun submitList(list: List<Any>) {
+        checkItemViewType(list)
         val newList = list.toTypedArray().toList()
         this.list = newList
         differ.submitList(newList)

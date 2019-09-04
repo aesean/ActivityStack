@@ -20,6 +20,7 @@ class ListAdapterActivity : BaseActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
         recyclerView.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
         val listAdapter = ListAdapter()
+        listAdapter.enableViewTypeCheck = true
         recyclerView.adapter = listAdapter
         listAdapter.register(Int::class.java)
                 .setView(R.layout.view_holder_simple_1)
@@ -33,7 +34,7 @@ class ListAdapterActivity : BaseActivity() {
                     (view as TextView).text = "Int($data)"
                 }
 
-        listAdapter.register(String::class.java)
+        listAdapter.register(Char::class.java)
                 .setView(R.layout.view_holder_simple_1)
                 .onViewCreated { dataHolder, view ->
                     view.setOnClickListener {

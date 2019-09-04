@@ -11,7 +11,6 @@ import java.util.*
 typealias OnCreateViewCallback<T> = (dataHolder: () -> T, view: View) -> Unit
 typealias OnBindViewCallback<T> = (view: View, data: T) -> Unit
 typealias ViewGenerator = (parent: ViewGroup) -> View
-typealias ViewTypeGenerator = (clazz: Class<*>) -> Int
 
 interface ViewHolderViewBuilder<T> {
     fun setView(viewGenerator: ViewGenerator): ViewHolderViewBinder<T>
@@ -64,11 +63,14 @@ private class ViewHolderGeneratorImpl<T> : ViewHolderViewBuilder<T>, ViewHolderV
 
 abstract class AbsAdapter : RecyclerView.Adapter<ViewHolder>() {
 
+    var enableViewTypeCheck = false
+
     abstract fun getData(position: Int): Any
 
     private val generatorMap = SparseArray<ViewHolderGeneratorImpl<*>?>()
 
-    var viewTypeGenerator: ViewTypeGenerator = { clazz -> System.identityHashCode(clazz) }
+    private val interfaceMap = mutableMapOf<Class<*>, Int>()
+    private val viewTypeCache = mutableMapOf<Class<*>, Int>()
 
     companion object {
         private val primitiveMap = mapOf(
@@ -85,8 +87,14 @@ abstract class AbsAdapter : RecyclerView.Adapter<ViewHolder>() {
 
     fun <T> register(dataType: Class<T>): ViewHolderViewBuilder<T> =
             ViewHolderGeneratorImpl<T>().apply {
-                val type = primitiveMap[dataType] ?: dataType
-                generatorMap.put(viewTypeGenerator(type), this)
+                val newViewType = primitiveMap[dataType] ?: dataType
+                val type = System.identityHashCode(newViewType)
+                if (newViewType.isInterface) {
+                    interfaceMap[newViewType] = type
+                } else {
+                    viewTypeCache[newViewType] = type
+                }
+                generatorMap.put(type, this)
             }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -101,13 +109,35 @@ abstract class AbsAdapter : RecyclerView.Adapter<ViewHolder>() {
         return viewHolder
     }
 
+    protected fun checkItemViewType(list: List<Any>) {
+        if (enableViewTypeCheck) {
+            list.forEach { it.toViewType() }
+        }
+    }
+
     final override fun getItemViewType(position: Int): Int {
-        val data = getData(position)
-        return viewTypeGenerator(data::class.java).apply {
-            requireNotNull(generatorMap[this]) {
-                "class didn't register. Have you forgotten to call register(...)? " +
-                        "class = ${data.javaClass}, data = $data"
+        return getData(position).toViewType()
+    }
+
+    private fun Any.toViewType(): Int {
+        val data = this
+        val dataClassType = data::class.java
+        val cachedType = viewTypeCache[dataClassType]
+        if (cachedType == null) {
+            interfaceMap.entries.forEach { entry ->
+                val key = entry.key
+                val value = entry.value
+                if (key.isAssignableFrom(dataClassType)) {
+                    viewTypeCache[dataClassType] = value
+                    return value
+                }
             }
+            throw IllegalArgumentException("${data.javaClass.simpleName} didn't register. " +
+                    "Have you forgotten to call register(...)? " +
+                    "${data.javaClass}, data = $data"
+            )
+        } else {
+            return cachedType
         }
     }
 
