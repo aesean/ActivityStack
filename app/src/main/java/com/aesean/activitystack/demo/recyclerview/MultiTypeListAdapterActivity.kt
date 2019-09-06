@@ -8,10 +8,17 @@ import androidx.recyclerview.widget.RecyclerView
 import com.aesean.activitystack.R
 import com.aesean.activitystack.base.BaseActivity
 import com.aesean.activitystack.view.recyclerview.MultiTypeListAdapter
-import kotlinx.android.synthetic.main.activity_list_adapter.*
+import kotlinx.android.synthetic.main.activity_list_adapter.add0
+import kotlinx.android.synthetic.main.activity_list_adapter.add1
+import kotlinx.android.synthetic.main.activity_list_adapter.add2
+import kotlinx.android.synthetic.main.activity_list_adapter.recyclerView
+import kotlinx.android.synthetic.main.activity_multi_type_list_adapter.*
 import kotlinx.android.synthetic.main.view_holder_simple_2.view.*
 
 class MultiTypeListAdapterActivity : BaseActivity() {
+
+    private data class Title(val name: String)
+    private data class Item(val name: String, val desc: String)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,7 +30,7 @@ class MultiTypeListAdapterActivity : BaseActivity() {
 
         recyclerView.adapter = multiTypeListAdapter
 
-        multiTypeListAdapter.register(String::class.java)
+        multiTypeListAdapter.register(Title::class.java)
                 .setView(R.layout.view_holder_simple_1)
                 .onViewCreated { dataHolder, view ->
                     view.setOnClickListener {
@@ -32,10 +39,10 @@ class MultiTypeListAdapterActivity : BaseActivity() {
                     }
                 }
                 .onBindView { view, data ->
-                    (view as TextView).text = "String($data)"
+                    (view as TextView).text = data.name
                 }
 
-        multiTypeListAdapter.register(Pair::class.java)
+        multiTypeListAdapter.register(Item::class.java)
                 .setView(R.layout.view_holder_simple_2)
                 .onViewCreated { dataHolder, view ->
                     view.setOnClickListener {
@@ -44,22 +51,24 @@ class MultiTypeListAdapterActivity : BaseActivity() {
                     }
                 }
                 .onBindView { view, data ->
-                    view.title.text = "Pair(${data.first})"
-                    view.desc.text = "${data.second}"
+                    view.title.text = data.name
+                    view.desc.text = data.desc
                 }
 
         fun newItem(type: Int, list: MutableList<Any>) {
-            val data: Any = when ((Math.random() * 2).toInt()) {
-                0 -> {
-                    "TYPE($type), String(${list.size})"
-                }
-                1 -> {
-                    Pair("TYPE($type)-Title", "Value(${list.size})")
-                }
-                else -> return
+            if (list.isEmpty()) {
+                list.add(Title("Title($type)"))
+            } else {
+                list.add(Item("Content(${list.size})", "this is a simple item"))
             }
-            list.add(data)
             multiTypeListAdapter.submitList(type, list)
+        }
+
+        fun removeItem(type: Int, list: MutableList<Any>) {
+            if (list.isNotEmpty()) {
+                list.removeAt(list.size - 1)
+                multiTypeListAdapter.submitList(type, list)
+            }
         }
 
         val list0 = mutableListOf<Any>()
@@ -76,6 +85,18 @@ class MultiTypeListAdapterActivity : BaseActivity() {
 
         add2.setOnClickListener {
             newItem(2, list2)
+        }
+
+        remove0.setOnClickListener {
+            removeItem(0, list0)
+        }
+
+        remove1.setOnClickListener {
+            removeItem(1, list1)
+        }
+
+        remove2.setOnClickListener {
+            removeItem(2, list2)
         }
     }
 }
