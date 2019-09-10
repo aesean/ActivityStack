@@ -7,7 +7,10 @@ java.lang.reflect.Field filed = clazz.getDeclaredField("mActivities");
 filed.setAccessible(true);
 Object activities = filed.get(activityThread);
 java.util.Map<Object, Object> arrayMap = (java.util.Map<Object, Object>) activities;
-Object[] result = new Object[6];
+Object[] result = new Object[8];
+result[0] = "All Activity is ";
+LinkedList<Activity> allActivities = new LinkedList<>();
+result[1] = allActivities;
 for (java.util.Map.Entry<Object, Object> entry : arrayMap.entrySet()) {
     Object value = entry.getValue();
     Class<?> activityClientRecordClass = value.getClass();
@@ -16,30 +19,31 @@ for (java.util.Map.Entry<Object, Object> entry : arrayMap.entrySet()) {
     android.app.Activity activity = (android.app.Activity) activityField.get(value);
     java.lang.reflect.Field mResumedField = android.app.Activity.class.getDeclaredField("mResumed");
     mResumedField.setAccessible(true);
+    allActivities.add(activity);
     if (mResumedField.get(activity) == Boolean.TRUE) {
-        result[0] = "Top Activity is ";
-        result[1] = activity;
+        result[2] = "Top Activity is ";
+        result[3] = activity;
         android.app.FragmentManager fragmentManager = activity.getFragmentManager();
         java.lang.reflect.Field mAddedField = fragmentManager.getClass().getDeclaredField("mAdded");
         mAddedField.setAccessible(true);
         Object mAdded = mAddedField.get(fragmentManager);
-        result[2] = "All Fragment is";
+        result[4] = "All Fragment is";
         if (mAdded == null) {
             mAdded = "null";
         }
-        result[3] = mAdded;
-        result[4] = "All Support Fragment is";
-        if (activity instanceof android.support.v4.app.FragmentActivity) {
-            android.support.v4.app.FragmentManager supportFragmentManager = ((android.support.v4.app.FragmentActivity) activity).getSupportFragmentManager();
+        result[5] = mAdded;
+        result[6] = "All Support Fragment is";
+        if (activity instanceof androidx.fragment.app.FragmentActivity) {
+            androidx.fragment.app.FragmentManager supportFragmentManager = ((androidx.fragment.app.FragmentActivity) activity).getSupportFragmentManager();
             java.lang.reflect.Field mSupportAddedField = supportFragmentManager.getClass().getDeclaredField("mAdded");
             mSupportAddedField.setAccessible(true);
             Object mSupportAdded = mSupportAddedField.get(supportFragmentManager);
             if (mSupportAdded == null) {
                 mSupportAdded = "null";
             }
-            result[5] = mSupportAdded;
+            result[7] = mSupportAdded;
         } else {
-            result[5] = "null";
+            result[7] = "null";
         }
         break;
     }
