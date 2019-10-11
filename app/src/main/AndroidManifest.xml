@@ -40,6 +40,10 @@
             android:name=".demo.recyclerview.MultiTypeListAdapterActivity"
             android:label="MultiTypeListAdapterActivity"
             android:parentActivityName=".MainActivity" />
+        <activity
+            android:name=".demo.activitystack.ActivityStackActivity"
+            android:label="ActivityStackActivity"
+            android:parentActivityName=".MainActivity" />
         <service
             android:name=".service.LaunchActivityService"
             android:process=":launch_activity_service" />
