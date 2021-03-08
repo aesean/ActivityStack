@@ -4,14 +4,13 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.TextView
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.aesean.activitystack.base.BaseActivity
 import com.aesean.activitystack.view.recyclerview.ListAdapter
-import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.view_holder_main.view.*
 
 @Target(AnnotationTarget.CLASS)
 @kotlin.annotation.Retention(AnnotationRetention.RUNTIME)
@@ -31,6 +30,7 @@ class MainActivity : BaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this, RecyclerView.VERTICAL, false)
         recyclerView.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
         recyclerView.itemAnimator = DefaultItemAnimator()
@@ -38,26 +38,27 @@ class MainActivity : BaseActivity() {
         recyclerView.adapter = listAdapter
 
         listAdapter.register(ActivityInfo::class.java)
-                .setView(R.layout.view_holder_main)
-                .onViewCreated { dataHolder, view ->
-                    view.setOnClickListener {
-                        val data = dataHolder()
-                        val targetName = data.name
-                        val packageName = data.packageName
-                        val intent = Intent()
-                        intent.`package` = packageName
-                        intent.setClassName(packageName, targetName)
-                        try {
-                            view.context.startActivity(intent)
-                        } catch (e: Exception) {
-                            e.message?.toToast()
-                        }
+            .layoutRes { R.layout.view_holder_main }
+            .onViewCreated { view, viewHolder, dataHolder ->
+                view.setOnClickListener {
+                    val data = dataHolder()
+                    val targetName = data.name
+                    val packageName = data.packageName
+                    val intent = Intent()
+                    intent.`package` = packageName
+                    intent.setClassName(packageName, targetName)
+                    try {
+                        view.context.startActivity(intent)
+                    } catch (e: Exception) {
+                        e.message?.toToast()
                     }
                 }
-                .onBindView { view, data ->
-                    view.titleView.text = data.title
-                    view.contentView.text = data.name.replace(data.packageName, "")
-                }
+            }
+            .onBindView { view, data ->
+                view.findViewById<TextView>(R.id.titleView).text = data.title
+                view.findViewById<TextView>(R.id.contentView).text =
+                    data.name.replace(data.packageName, "")
+            }
 
         val packageInfo = packageManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES)
         val list = packageInfo.activities.filter { shouldShow(it.name) }.sortedBy { it.title }

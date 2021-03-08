@@ -9,7 +9,7 @@ Object activities = filed.get(activityThread);
 java.util.Map<Object, Object> arrayMap = (java.util.Map<Object, Object>) activities;
 Object[] result = new Object[8];
 result[0] = "All Activity is ";
-LinkedList<Activity> allActivities = new LinkedList<>();
+java.util.LinkedList<android.app.Activity> allActivities = new java.util.LinkedList<>();
 result[1] = allActivities;
 for (java.util.Map.Entry<Object, Object> entry : arrayMap.entrySet()) {
     Object value = entry.getValue();

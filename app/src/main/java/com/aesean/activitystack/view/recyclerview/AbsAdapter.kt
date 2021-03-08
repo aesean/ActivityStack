@@ -4,48 +4,72 @@ import android.util.SparseArray
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.annotation.LayoutRes
+import androidx.annotation.IdRes
 import androidx.recyclerview.widget.RecyclerView
 import java.util.*
 
-typealias OnCreateViewCallback<T> = (dataHolder: () -> T, view: View) -> Unit
+typealias OnCreateViewCallback<T> = (view: View, viewHolder: RecyclerView.ViewHolder, dataHolder: () -> T) -> Unit
 typealias OnBindViewCallback<T> = (view: View, data: T) -> Unit
 typealias ViewGenerator = (parent: ViewGroup) -> View
 
-interface ViewHolderViewBuilder<T> {
-    fun setView(viewGenerator: ViewGenerator): ViewHolderViewBinder<T>
-    fun setView(@LayoutRes layoutRes: Int): ViewHolderViewBinder<T>
+typealias ViewResGenerator = (parent: ViewGroup) -> Int
+
+interface ViewHolderBuilder<T> {
+    fun createView(viewGenerator: ViewGenerator): ViewHolderBinder<T>
+    fun layoutRes(viewResGenerator: ViewResGenerator): ViewHolderBinder<T>
 }
 
-interface ViewHolderViewBinder<T> {
-    fun onViewCreated(callback: OnCreateViewCallback<T>): ViewHolderViewBinder<T>
-    fun onBindView(callback: OnBindViewCallback<T>): ViewHolderViewBinder<T>
+interface ViewHolderBinder<T> {
+    fun onViewCreated(callback: OnCreateViewCallback<T>): ViewHolderBinder<T>
+    fun onItemViewClicked(listener: View.OnClickListener): ViewHolderBinder<T>
+    fun onViewClicked(@IdRes viewId: Int, listener: View.OnClickListener): ViewHolderBinder<T>
+    fun onBindView(callback: OnBindViewCallback<T>): ViewHolderBinder<T>
 }
 
-private class ViewHolderGeneratorImpl<T> : ViewHolderViewBuilder<T>, ViewHolderViewBinder<T> {
+class ViewHolderImpl<T> : ViewHolderBuilder<T>, ViewHolderBinder<T> {
+
     var viewGenerator: ((parent: ViewGroup) -> View)? = null
     var createViewCallbackList: MutableList<OnCreateViewCallback<T>> = LinkedList()
     var bindViewCallbackList: MutableList<OnBindViewCallback<T>> = LinkedList()
+    var onItemViewClickedListeners: MutableList<View.OnClickListener> = LinkedList()
+    var onViewClickedListeners: MutableList<Pair<Int, View.OnClickListener>> = LinkedList()
 
-    override fun setView(viewGenerator: ViewGenerator) = this.also {
+    override fun createView(viewGenerator: ViewGenerator): ViewHolderBinder<T> {
         this.viewGenerator = viewGenerator
+        return this
     }
 
-    override fun setView(layoutRes: Int) = this.also {
+    override fun layoutRes(viewResGenerator: ViewResGenerator): ViewHolderBinder<T> = this.also {
         this.viewGenerator = { parent ->
-            LayoutInflater.from(parent.context).inflate(layoutRes, parent, false)
+            LayoutInflater.from(parent.context)
+                .inflate(viewResGenerator(parent), parent, false)
         }
     }
 
-    override fun onViewCreated(callback: OnCreateViewCallback<T>): ViewHolderViewBinder<T> =
-            this.also { this.createViewCallbackList.add(callback) }
+    override fun onViewCreated(callback: OnCreateViewCallback<T>): ViewHolderBinder<T> =
+        this.also { this.createViewCallbackList.add(callback) }
 
-    fun performViewCreate(dataHolder: () -> Any, view: View) {
+    override fun onItemViewClicked(listener: View.OnClickListener): ViewHolderBinder<T> =
+        this.also { onItemViewClickedListeners.add(listener) }
+
+    override fun onViewClicked(
+        viewId: Int,
+        listener: View.OnClickListener
+    ): ViewHolderBinder<T> =
+        this.also { onViewClickedListeners.add(Pair(viewId, listener)) }
+
+    fun performViewCreate(view: View, viewHolder: RecyclerView.ViewHolder, dataHolder: () -> Any) {
+        onItemViewClickedListeners.forEach { listener ->
+            viewHolder.itemView.setOnClickListener(listener)
+        }
+        onViewClickedListeners.forEach { (id, view) ->
+            viewHolder.itemView.findViewById<View>(id).setOnClickListener(view)
+        }
         createViewCallbackList.forEach { action ->
-            action({
+            action(view, viewHolder) {
                 @Suppress("UNCHECKED_CAST")
                 dataHolder() as T
-            }, view)
+            }
         }
     }
 
@@ -56,9 +80,10 @@ private class ViewHolderGeneratorImpl<T> : ViewHolderViewBuilder<T>, ViewHolderV
         }
     }
 
-    override fun onBindView(callback: OnBindViewCallback<T>): ViewHolderViewBinder<T> = this.also {
+    override fun onBindView(callback: OnBindViewCallback<T>): ViewHolderBinder<T> = this.also {
         this.bindViewCallbackList.add(callback)
     }
+
 }
 
 abstract class AbsAdapter : RecyclerView.Adapter<ViewHolder>() {
@@ -67,45 +92,58 @@ abstract class AbsAdapter : RecyclerView.Adapter<ViewHolder>() {
 
     abstract fun getData(position: Int): Any
 
-    private val generatorMap = SparseArray<ViewHolderGeneratorImpl<*>?>()
+    private val generatorMap = SparseArray<ViewHolderImpl<*>?>()
 
     private val interfaceMap = mutableMapOf<Class<*>, Int>()
     private val viewTypeCache = mutableMapOf<Class<*>, Int>()
 
     companion object {
         private val primitiveMap = mapOf(
-                java.lang.Boolean.TYPE to java.lang.Boolean::class.java,
-                java.lang.Character.TYPE to java.lang.Character::class.java,
-                java.lang.Byte.TYPE to java.lang.Byte::class.java,
-                java.lang.Short.TYPE to java.lang.Short::class.java,
-                java.lang.Integer.TYPE to java.lang.Integer::class.java,
-                java.lang.Float.TYPE to java.lang.Float::class.java,
-                java.lang.Long.TYPE to java.lang.Long::class.java,
-                java.lang.Double.TYPE to java.lang.Double::class.java,
-                java.lang.Void.TYPE to java.lang.Void::class.java)
+            java.lang.Boolean.TYPE to java.lang.Boolean::class.java,
+            java.lang.Character.TYPE to java.lang.Character::class.java,
+            java.lang.Byte.TYPE to java.lang.Byte::class.java,
+            java.lang.Short.TYPE to java.lang.Short::class.java,
+            java.lang.Integer.TYPE to java.lang.Integer::class.java,
+            java.lang.Float.TYPE to java.lang.Float::class.java,
+            java.lang.Long.TYPE to java.lang.Long::class.java,
+            java.lang.Double.TYPE to java.lang.Double::class.java,
+            java.lang.Void.TYPE to java.lang.Void::class.java
+        )
     }
 
-    fun <T> register(dataType: Class<T>): ViewHolderViewBuilder<T> =
-            ViewHolderGeneratorImpl<T>().apply {
-                val newViewType = primitiveMap[dataType] ?: dataType
-                val type = System.identityHashCode(newViewType)
-                if (newViewType.isInterface) {
-                    interfaceMap[newViewType] = type
-                } else {
-                    viewTypeCache[newViewType] = type
-                }
-                generatorMap.put(type, this)
+    fun <T> register(dataType: Class<T>): ViewHolderBuilder<T> =
+        ViewHolderImpl<T>().apply {
+            val newViewType = primitiveMap[dataType] ?: dataType
+            val type = System.identityHashCode(newViewType)
+            if (newViewType.isInterface) {
+                interfaceMap[newViewType] = type
+            } else {
+                viewTypeCache[newViewType] = type
             }
+            generatorMap.put(type, this)
+        }
+
+    inline fun <reified T> register(): ViewHolderBuilder<T> {
+        return register(T::class.java)
+    }
+
+    inline fun <reified T> registerView(crossinline viewGenerator: ViewGenerator): ViewHolderBinder<T> {
+        return register(T::class.java).createView { viewGenerator(it) }
+    }
+
+    inline fun <reified T> registerViewRes(crossinline viewResGenerator: ViewResGenerator): ViewHolderBinder<T> {
+        return register(T::class.java).layoutRes { viewResGenerator(it) }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val holderGenerator: ViewHolderGeneratorImpl<*> = generatorMap.get(viewType)
-                ?: throw IllegalArgumentException("viewType didn't register. viewType = $viewType")
-        val viewHolder = holderGenerator.viewGenerator
-                ?.let { ViewHolder(it(parent)) }
-                ?: throw IllegalArgumentException("ViewHolderGenerator can't be null.")
-        holderGenerator.performViewCreate({
-            getData(viewHolder.adapterPosition)
-        }, viewHolder.itemView)
+        val holderGeneratorImpl: ViewHolderImpl<*> = generatorMap.get(viewType)
+            ?: throw IllegalArgumentException("viewType didn't register. viewType = $viewType")
+        val viewHolder = holderGeneratorImpl.viewGenerator
+            ?.let { ViewHolder(it(parent)) }
+            ?: throw IllegalArgumentException("ViewHolderGenerator can't be null.")
+        holderGeneratorImpl.performViewCreate(viewHolder.itemView, viewHolder) {
+            getData(viewHolder.bindingAdapterPosition)
+        }
         return viewHolder
     }
 
@@ -119,9 +157,9 @@ abstract class AbsAdapter : RecyclerView.Adapter<ViewHolder>() {
         return getData(position).toViewType()
     }
 
-    private fun Any.toViewType(): Int {
-        val data = this
-        val dataClassType = data::class.java
+    @Suppress("MemberVisibilityCanBePrivate")
+    protected fun Class<*>.toViewType(): Int {
+        val dataClassType = this
         val cachedType = viewTypeCache[dataClassType]
         if (cachedType == null) {
             interfaceMap.entries.forEach { entry ->
@@ -132,26 +170,32 @@ abstract class AbsAdapter : RecyclerView.Adapter<ViewHolder>() {
                     return value
                 }
             }
-            throw IllegalArgumentException("${data.javaClass.simpleName} didn't register. " +
-                    "Have you forgotten to call register(...)? " +
-                    "${data.javaClass}, data = $data"
-            )
+            val msg = "$dataClassType didn't register. Have you forgotten to call register(...)? "
+            throw IllegalArgumentException(msg)
         } else {
             return cachedType
         }
     }
 
+    @Suppress("MemberVisibilityCanBePrivate")
+    protected fun Any.toViewType(): Int {
+        val data = this
+        val dataClassType = this::class.java
+        try {
+            return dataClassType.toViewType()
+        } catch (e: IllegalArgumentException) {
+            throw IllegalStateException("data = $data", e)
+        }
+    }
+
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         generatorMap.get(getItemViewType(position))
-                ?.performBind(holder.itemView, getData(position))
-                ?: throw IllegalArgumentException(
-                        "class didn't register. Have you forgotten to call register(...)? "
-                                + "class = ${getData(position)}"
-                )
+            ?.performBind(holder.itemView, getData(position))
+            ?: throw IllegalArgumentException(
+                "class didn't register. Have you forgotten to call register(...)? "
+                        + "class = ${getData(position)}"
+            )
     }
 }
 
-class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-    constructor(parent: ViewGroup, @LayoutRes layoutRes: Int) :
-            this(LayoutInflater.from(parent.context).inflate(layoutRes, parent, false))
-}
+class ViewHolder(view: View) : RecyclerView.ViewHolder(view)

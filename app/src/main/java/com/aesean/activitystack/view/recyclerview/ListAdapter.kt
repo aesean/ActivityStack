@@ -1,21 +1,24 @@
 package com.aesean.activitystack.view.recyclerview
 
+import android.annotation.SuppressLint
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 
-class ListAdapter @JvmOverloads constructor(diffCallback: DiffUtil.ItemCallback<Any> = object : DiffUtil.ItemCallback<Any>() {
-    override fun areItemsTheSame(oldItem: Any, newItem: Any): Boolean {
-        return oldItem == newItem
-    }
+class ListAdapter(
+    diffCallback: DiffUtil.ItemCallback<Any> = object : DiffUtil.ItemCallback<Any>() {
 
-    override fun areContentsTheSame(oldItem: Any, newItem: Any): Boolean {
-        return areItemsTheSame(oldItem, newItem)
-    }
-}) : AbsAdapter() {
+        override fun areItemsTheSame(oldItem: Any, newItem: Any): Boolean {
+            return oldItem == newItem
+        }
 
-    private val differ: AsyncListDiffer<Any> = diffCallback.let {
-        AsyncListDiffer(this, diffCallback)
+        @SuppressLint("DiffUtilEquals")
+        override fun areContentsTheSame(oldItem: Any, newItem: Any): Boolean {
+            return oldItem == newItem
+        }
     }
+) : AbsAdapter() {
+
+    private val differ: AsyncListDiffer<Any> = AsyncListDiffer(this, diffCallback)
 
     private var list: List<Any> = emptyList()
 
@@ -26,7 +29,7 @@ class ListAdapter @JvmOverloads constructor(diffCallback: DiffUtil.ItemCallback<
         differ.submitList(newList)
     }
 
-    override fun getItemCount() = list.size
+    override fun getItemCount() = differ.currentList.size
 
     override fun getData(position: Int): Any = list[position]
 }

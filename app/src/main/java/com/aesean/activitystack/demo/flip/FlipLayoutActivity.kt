@@ -1,13 +1,11 @@
 package com.aesean.activitystack.demo.flip
 
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.aesean.activitystack.R
 import com.aesean.activitystack.view.flip.FlipLayout
-import kotlinx.android.synthetic.main.activity_flip_layout.*
 
 class FlipLayoutActivity : AppCompatActivity() {
     private fun log(s: String?) {
@@ -17,7 +15,7 @@ class FlipLayoutActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_flip_layout)
-        val view = flipLayout
+        val view = findViewById<FlipLayout>(R.id.flipLayout)
         view.flipInDuration = 3000
         view.flipOutDuration = 3000
         view.setOnClickListener {
@@ -62,22 +60,17 @@ class FlipLayoutActivity : AppCompatActivity() {
             }
         })
 
-        flip.setOnClickListener {
+        findViewById<View>(R.id.flip).setOnClickListener {
             view.flip()
         }
-        flipReverse.setOnClickListener {
+        findViewById<View>(R.id.flipReverse).setOnClickListener {
             view.flipReverse()
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            resume.setOnClickListener {
-                view.resume()
-            }
-            pause.setOnClickListener {
-                view.pause()
-            }
-        } else {
-            resume.visibility = View.INVISIBLE
-            pause.visibility = View.INVISIBLE
+        findViewById<View>(R.id.resume).setOnClickListener {
+            view.resume()
+        }
+        findViewById<View>(R.id.pause).setOnClickListener {
+            view.pause()
         }
     }
 }

@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/ActivityStack.iml" filepath="$PROJECT_DIR$/.idea/ActivityStack.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/ActivityStack.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/ActivityStack.app.iml" />
     </modules>
   </component>
 </project>

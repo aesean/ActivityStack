@@ -3,6 +3,7 @@ package com.aesean.activitystack.view.recyclerview
 import android.util.SparseIntArray
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
+import java.util.*
 
 private fun <T> MutableList<T>.replace(fromIndex: Int, toIndex: Int, list: List<T>) {
     this.subList(fromIndex, toIndex).apply {
@@ -26,12 +27,19 @@ class MultiTypeListAdapter @JvmOverloads constructor(diffCallback: DiffUtil.Item
     private val mainList = ArrayList<Any>()
     private val typeIndexArray = SparseIntArray()
 
-    fun submit(type: Int, any: Any) {
-        submitList(type, listOf(any))
-    }
-
     fun submitList(type: Int, list: List<Any>) {
         performSubmitList(type, list.toTypedArray().asList())
+    }
+
+    fun toType(position: Int): Int {
+        var typeIndex = 0
+        for (i in 1 until typeIndexArray.size()) {
+            if (position < typeIndexArray[typeIndexArray.keyAt(i)]) {
+                return typeIndexArray.keyAt(typeIndex)
+            }
+            typeIndex = i
+        }
+        return typeIndexArray.keyAt(typeIndex)
     }
 
     private fun performSubmitList(type: Int, list: List<Any>) {
@@ -46,16 +54,17 @@ class MultiTypeListAdapter @JvmOverloads constructor(diffCallback: DiffUtil.Item
         val keyIndex = typeIndexArray.indexOfKey(type)
         if (keyIndex < 0) {
             val shouldInsertIndex = -keyIndex - 1
-            val mainListIndex: Int = if (shouldInsertIndex < typeIndexArray.size()) {
-                val nextKeyIndex = shouldInsertIndex + 1
-                val nextKey = typeIndexArray.keyAt(nextKeyIndex)
-                val nextIndex = typeIndexArray.get(nextKey)
+            val mainListIndex: Int = when {
+                shouldInsertIndex < typeIndexArray.size() -> {
+                    val nextKey = typeIndexArray.keyAt(shouldInsertIndex)
+                    val nextIndex = typeIndexArray.get(nextKey)
 
-                updateTypeIndexArray(nextIndex, list.size)
-                nextIndex
-            } else {
-                mainList.size
+                    updateTypeIndexArray(nextIndex, list.size)
+                    nextIndex
+                }
+                else -> mainList.size
             }
+
             typeIndexArray.put(type, mainListIndex)
             mainList.replace(mainListIndex, mainListIndex, list)
         } else {
@@ -69,6 +78,7 @@ class MultiTypeListAdapter @JvmOverloads constructor(diffCallback: DiffUtil.Item
                 }
             }
 
+            require(fromIndex <= toIndex) { "type = $type, keyIndex = $keyIndex, fromIndex = $fromIndex, toIndex = $toIndex, mainList = $mainList, list = $list, typeIndexArray = $typeIndexArray" }
             mainList.replace(fromIndex, toIndex, list)
         }
 
